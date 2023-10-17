@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -13,7 +14,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class StatsClient {
+public class StatsClient { //TODO сделать логирование
 
     private final RestTemplate rest;
 
@@ -21,19 +22,29 @@ public class StatsClient {
     private final String serverUrl;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public void postHit(EndpointHitIn hit) {
-        HttpEntity<EndpointHitIn> requestEntity = new HttpEntity<>(hit);
-        rest.exchange(serverUrl + "/hit", HttpMethod.POST, requestEntity, EndpointHitIn.class);
+    public ResponseEntity<Object> postHit(EndpointHitDto hit) {
+        HttpEntity<EndpointHitDto> requestEntity = new HttpEntity<>(hit);
+        return rest.exchange(serverUrl + "/hit", HttpMethod.POST, requestEntity, Object.class);
     }
 
-    public VeiwStats getStats(String start, String end, String[] uris, Boolean unique){
-        LocalDateTime startDayTime = LocalDateTime.parse(start, formatter);
-        LocalDateTime endDayTime = LocalDateTime.parse(end, formatter);
-        Map<String, Object> parameters = Map.of(
-                "start", startDayTime,
-                "end", endDayTime,
-                "uris", uris
-        );
-        return rest.exchange(serverUrl + "/stats", HttpMethod.GET, null, VeiwStats.class, parameters).getBody();
+    public ResponseEntity<Object> getStats(LocalDateTime start, LocalDateTime end, String[] uris, Boolean unique){
+        String startDayTime = start.format(formatter);
+        String endDayTime = end.format(formatter);
+        Map<String, Object> parameters;
+        if(unique != null) {
+            parameters = Map.of(
+                    "start", startDayTime,
+                    "end", endDayTime,
+                    "uris", uris,
+                    "unique", unique
+            );
+        } else {
+            parameters = Map.of(
+                    "start", startDayTime,
+                    "end", endDayTime,
+                    "uris", uris
+            );
+        }
+        return rest.exchange(serverUrl + "/stats", HttpMethod.GET, null, Object.class, parameters);
     }
 }

@@ -1,13 +1,13 @@
 package ru.practicum;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @NoArgsConstructor
 @AllArgsConstructor
-public class EndpointHitIn {
+@Getter
+public class EndpointHitDto {
 
     private long id;
 
@@ -17,5 +17,5 @@ public class EndpointHitIn {
 
     private String ip;
 
-    private LocalDateTime timestamp;
+    private String timestamp;
 }
