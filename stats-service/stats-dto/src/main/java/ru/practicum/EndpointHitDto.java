@@ -1,12 +1,11 @@
 package ru.practicum;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Setter
 public class EndpointHitDto {
 
     private long id;

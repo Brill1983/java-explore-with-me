@@ -10,11 +10,12 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class StatsClient { //TODO сделать логирование
+public class StatsClient {
 
     private final RestTemplate rest;
 
@@ -22,29 +23,46 @@ public class StatsClient { //TODO сделать логирование
     private final String serverUrl;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public ResponseEntity<Object> postHit(EndpointHitDto hit) {
+    public EndpointHitDto postHit(EndpointHitDto hit) {
         HttpEntity<EndpointHitDto> requestEntity = new HttpEntity<>(hit);
-        return rest.exchange(serverUrl + "/hit", HttpMethod.POST, requestEntity, Object.class);
+        return rest.exchange(serverUrl + "/hit", HttpMethod.POST, requestEntity, EndpointHitDto.class).getBody();
     }
 
-    public ResponseEntity<Object> getStats(LocalDateTime start, LocalDateTime end, String[] uris, Boolean unique){
+    public List<VeiwStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> urisList, Boolean unique){
         String startDayTime = start.format(formatter);
         String endDayTime = end.format(formatter);
+
+        StringBuilder uris = new StringBuilder();
+        for (int i = 0; i < urisList.size() - 1; i++) {
+            uris.append(urisList.get(i));
+            uris.append("&uris=");
+        }
+        uris.append(urisList.get(urisList.size()-1));
+        String u = uris.toString();
+
+//        String uris = String.join("&&uris==", urisList);
+
         Map<String, Object> parameters;
         if(unique != null) {
             parameters = Map.of(
                     "start", startDayTime,
                     "end", endDayTime,
-                    "uris", uris,
+                    "uris", u,
                     "unique", unique
             );
         } else {
             parameters = Map.of(
                     "start", startDayTime,
                     "end", endDayTime,
-                    "uris", uris
+                    "uris", u,
+                    "unique", false
             );
         }
-        return rest.exchange(serverUrl + "/stats", HttpMethod.GET, null, Object.class, parameters);
+
+        String url = serverUrl + "/stats?start={start}&end={end}&uris={uris}&unique={unique}";
+
+        List<VeiwStatsDto> response = rest.getForObject(serverUrl + "/stats?start={start}&end={end}&uris={uris}&unique={unique}", List.class, parameters);
+
+        return response;
     }
 }
