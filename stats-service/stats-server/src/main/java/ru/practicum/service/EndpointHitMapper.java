@@ -7,7 +7,7 @@ import ru.practicum.model.EndpointHit;
 
 import java.time.LocalDateTime;
 
-import static ru.practicum.constants.Constants.FORMAT;
+import static ru.practicum.util.Constants.FORMAT;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EndpointHitMapper {

@@ -6,10 +6,14 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.EndpointHitDto;
 import ru.practicum.VeiwStatsDto;
+import ru.practicum.exceptions.BadParameterException;
 import ru.practicum.service.StatsService;
 
-import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+
+import static ru.practicum.util.Constants.FORMAT;
 
 @Slf4j
 @RestController
@@ -29,10 +33,17 @@ public class StatsController {
     @GetMapping("/stats")
     public List<VeiwStatsDto> getVeiwStats(@RequestParam String start,
                                            @RequestParam String end,
-                                           @RequestParam List<String> uris,
+                                           @RequestParam(required = false) Set<String> uris,
                                            @RequestParam(defaultValue = "false") boolean unique) {
         log.info("В метод getVeiwStats переданы параметры запроса: start {}, end {}, uri {}, unique {}",
                 start, end, uris, unique);
-        return statsService.getVeiwStats(start, end, uris, unique);
+        LocalDateTime startTime = LocalDateTime.parse(start, FORMAT);
+        LocalDateTime endTime = LocalDateTime.parse(end, FORMAT);
+
+        if (endTime.isBefore(startTime)) {
+            throw new BadParameterException("Начало не может быть позже окончания периода");
+        }
+
+        return statsService.getVeiwStats(startTime, endTime, uris, unique);
     }
 }

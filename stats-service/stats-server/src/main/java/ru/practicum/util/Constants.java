@@ -1,4 +1,4 @@
-package ru.practicum.constants;
+package ru.practicum.util;
 
 import java.time.format.DateTimeFormatter;
 

@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -28,38 +27,28 @@ public class StatsClient {
         return rest.exchange(serverUrl + "/hit", HttpMethod.POST, requestEntity, EndpointHitDto.class).getBody();
     }
 
-    public List<VeiwStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> urisList, Boolean unique){
+    public List<VeiwStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> urisList, Boolean unique) {
         String startDayTime = start.format(formatter);
         String endDayTime = end.format(formatter);
 
-        StringBuilder uris = new StringBuilder();
-        for (int i = 0; i < urisList.size() - 1; i++) {
-            uris.append(urisList.get(i));
-            uris.append("&uris=");
-        }
-        uris.append(urisList.get(urisList.size()-1));
-        String u = uris.toString();
-
-//        String uris = String.join("&&uris==", urisList);
+        String uris = String.join(",", urisList);
 
         Map<String, Object> parameters;
-        if(unique != null) {
+        if (unique != null) {
             parameters = Map.of(
                     "start", startDayTime,
                     "end", endDayTime,
-                    "uris", u,
+                    "uris", uris,
                     "unique", unique
             );
         } else {
             parameters = Map.of(
                     "start", startDayTime,
                     "end", endDayTime,
-                    "uris", u,
+                    "uris", uris,
                     "unique", false
             );
         }
-
-        String url = serverUrl + "/stats?start={start}&end={end}&uris={uris}&unique={unique}";
 
         List<VeiwStatsDto> response = rest.getForObject(serverUrl + "/stats?start={start}&end={end}&uris={uris}&unique={unique}", List.class, parameters);
 

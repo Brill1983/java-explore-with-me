@@ -10,13 +10,12 @@ import ru.practicum.model.EndpointHit;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static ru.practicum.constants.Constants.FORMAT;
+import java.util.Set;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class StatsServiceImpl implements StatsService{
+public class StatsServiceImpl implements StatsService {
 
     private final StatsRepository statsRepository;
 
@@ -29,17 +28,26 @@ public class StatsServiceImpl implements StatsService{
     }
 
     @Override
-    public List<VeiwStatsDto> getVeiwStats(String start, String end, List<String> uris, boolean unique) {
-        LocalDateTime startTime = LocalDateTime.parse(start, FORMAT);
-        LocalDateTime endTime = LocalDateTime.parse(end, FORMAT);
+    public List<VeiwStatsDto> getVeiwStats(LocalDateTime start, LocalDateTime end, Set<String> uris, boolean unique) {
+        List<VeiwStatsDto> veiwStatsDtoList;
+
         if (unique) {
-            List<VeiwStatsDto> veiwStatsDtoList = statsRepository.getUniqueStats(startTime, endTime, uris);
-            log.info("Из базы получен список из {} элементов", veiwStatsDtoList.size());
-            return veiwStatsDtoList;
+            if (uris == null || uris.isEmpty()) {
+                veiwStatsDtoList = statsRepository.getUniqueStatsWithoutUris(start, end);
+                log.info("Из базы получен список из {} элементов", veiwStatsDtoList.size());
+            } else {
+                veiwStatsDtoList = statsRepository.getUniqueStats(start, end, uris);
+                log.info("Из базы получен список из {} элементов", veiwStatsDtoList.size());
+            }
         } else {
-            List<VeiwStatsDto> veiwStatsDtoList = statsRepository.getStats(startTime, endTime, uris);
-            log.info("Из базы получен список из {} элементов", veiwStatsDtoList.size());
-            return veiwStatsDtoList;
+            if (uris == null || uris.isEmpty()) {
+                veiwStatsDtoList = statsRepository.getStatsWithoutUris(start, end);
+                log.info("Из базы получен список из {} элементов", veiwStatsDtoList.size());
+            } else {
+                veiwStatsDtoList = statsRepository.getStats(start, end, uris);
+                log.info("Из базы получен список из {} элементов", veiwStatsDtoList.size());
+            }
         }
+        return veiwStatsDtoList;
     }
 }
