@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
-import static ru.practicum.util.Constants.FORMAT;
+import static ru.practicum.util.Constants.DATE_FORMAT;
 
 @Slf4j
 @RestController
@@ -37,8 +37,8 @@ public class StatsController {
                                            @RequestParam(defaultValue = "false") boolean unique) {
         log.info("В метод getVeiwStats переданы параметры запроса: start {}, end {}, uri {}, unique {}",
                 start, end, uris, unique);
-        LocalDateTime startTime = LocalDateTime.parse(start, FORMAT);
-        LocalDateTime endTime = LocalDateTime.parse(end, FORMAT);
+        LocalDateTime startTime = LocalDateTime.parse(start, DATE_FORMAT);
+        LocalDateTime endTime = LocalDateTime.parse(end, DATE_FORMAT);
 
         if (endTime.isBefore(startTime)) {
             throw new BadParameterException("Начало не может быть позже окончания периода");

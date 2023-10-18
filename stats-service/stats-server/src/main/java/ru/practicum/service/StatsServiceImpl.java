@@ -3,6 +3,7 @@ package ru.practicum.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import ru.practicum.EndpointHitDto;
 import ru.practicum.VeiwStatsDto;
 import ru.practicum.dao.StatsRepository;
@@ -29,25 +30,16 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public List<VeiwStatsDto> getVeiwStats(LocalDateTime start, LocalDateTime end, Set<String> uris, boolean unique) {
-        List<VeiwStatsDto> veiwStatsDtoList;
 
-        if (unique) {
-            if (uris == null || uris.isEmpty()) {
-                veiwStatsDtoList = statsRepository.getUniqueStatsWithoutUris(start, end);
-                log.info("Из базы получен список из {} элементов", veiwStatsDtoList.size());
-            } else {
-                veiwStatsDtoList = statsRepository.getUniqueStats(start, end, uris);
-                log.info("Из базы получен список из {} элементов", veiwStatsDtoList.size());
-            }
-        } else {
-            if (uris == null || uris.isEmpty()) {
-                veiwStatsDtoList = statsRepository.getStatsWithoutUris(start, end);
-                log.info("Из базы получен список из {} элементов", veiwStatsDtoList.size());
-            } else {
-                veiwStatsDtoList = statsRepository.getStats(start, end, uris);
-                log.info("Из базы получен список из {} элементов", veiwStatsDtoList.size());
-            }
-        }
+        List<VeiwStatsDto> veiwStatsDtoList = unique ?
+                CollectionUtils.isEmpty(uris) ?
+                        statsRepository.getUniqueStatsWithoutUris(start, end) :
+                        statsRepository.getUniqueStats(start, end, uris) :
+                CollectionUtils.isEmpty(uris) ?
+                        statsRepository.getStatsWithoutUris(start, end) :
+                        statsRepository.getStats(start, end, uris);
+
+        log.info("Из базы получен список из {} элементов", veiwStatsDtoList.size());
         return veiwStatsDtoList;
     }
 }

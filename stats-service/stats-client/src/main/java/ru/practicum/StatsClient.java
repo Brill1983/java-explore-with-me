@@ -16,7 +16,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class StatsClient {
 
-    private final RestTemplate rest;
+    private final RestTemplate restTemplate;
 
     @Value("${stats-server.url}")
     private final String serverUrl;
@@ -24,7 +24,7 @@ public class StatsClient {
 
     public EndpointHitDto postHit(EndpointHitDto hit) {
         HttpEntity<EndpointHitDto> requestEntity = new HttpEntity<>(hit);
-        return rest.exchange(serverUrl + "/hit", HttpMethod.POST, requestEntity, EndpointHitDto.class).getBody();
+        return restTemplate.exchange(serverUrl + "/hit", HttpMethod.POST, requestEntity, EndpointHitDto.class).getBody();
     }
 
     public List<VeiwStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> urisList, Boolean unique) {
@@ -33,25 +33,13 @@ public class StatsClient {
 
         String uris = String.join(",", urisList);
 
-        Map<String, Object> parameters;
-        if (unique != null) {
-            parameters = Map.of(
-                    "start", startDayTime,
-                    "end", endDayTime,
-                    "uris", uris,
-                    "unique", unique
-            );
-        } else {
-            parameters = Map.of(
-                    "start", startDayTime,
-                    "end", endDayTime,
-                    "uris", uris,
-                    "unique", false
-            );
-        }
+        Map<String, Object> parameters = Map.of(
+                "start", startDayTime,
+                "end", endDayTime,
+                "uris", uris,
+                "unique", unique != null ? unique : false
+        );
 
-        List<VeiwStatsDto> response = rest.getForObject(serverUrl + "/stats?start={start}&end={end}&uris={uris}&unique={unique}", List.class, parameters);
-
-        return response;
+        return restTemplate.getForObject(serverUrl + "/stats?start={start}&end={end}&uris={uris}&unique={unique}", List.class, parameters);
     }
 }
