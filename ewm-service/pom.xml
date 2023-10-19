@@ -10,7 +10,7 @@
     </parent>
 
     <groupId>ru.practicum</groupId>
-    <artifactId>main-service</artifactId>
+    <artifactId>ewm-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
@@ -38,6 +38,12 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
 
@@ -73,11 +79,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-configuration-processor</artifactId>
-            <optional>true</optional>
-        </dependency>
     </dependencies>
 
     <build>

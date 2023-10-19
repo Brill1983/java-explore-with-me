@@ -6,11 +6,12 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -31,15 +32,17 @@ public class StatsClient {
         String startDayTime = start.format(formatter);
         String endDayTime = end.format(formatter);
 
-        String uris = String.join(",", urisList);
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(serverUrl)
+                .path("/stats")
+                .queryParam("start", startDayTime)
+                .queryParam("end", endDayTime)
+                .queryParam("uris", urisList)
+                .queryParam("unique", unique);
 
-        Map<String, Object> parameters = Map.of(
-                "start", startDayTime,
-                "end", endDayTime,
-                "uris", uris,
-                "unique", unique != null ? unique : false
-        );
+        URI uriString = uriComponentsBuilder.build().toUri();
 
-        return restTemplate.getForObject(serverUrl + "/stats?start={start}&end={end}&uris={uris}&unique={unique}", List.class, parameters);
+        List<VeiwStatsDto> response = restTemplate.getForObject(uriString, List.class);
+
+        return response;
     }
 }
