@@ -13,12 +13,13 @@ import javax.persistence.*;
 public class User {
 
     @Id
+    @Column(updatable = false) // TODO проверить поведение
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "email", nullable = false, length = 50)
+    @Column(unique = true, name = "email", nullable = false, length = 50)
     private String email;
 }

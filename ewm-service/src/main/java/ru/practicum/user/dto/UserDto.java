@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
@@ -14,12 +15,12 @@ import javax.validation.constraints.NotBlank;
 @Setter
 public class UserDto {
 
-    @NotBlank(message = "Почта пользователя обязательна для заполнения")
-    @Email(message = "Передан неправильный формат email")
+//    @NotBlank(message = "Почта пользователя обязательна для заполнения")
+//    @Email(message = "Передан неправильный формат email")
     private String email;
 
     private Long id;
 
-    @NotBlank(message = "Имя пользователя обязательно для заполнения")
+//    @NotBlank(message = "Имя пользователя обязательно для заполнения")
     private String name;
 }
