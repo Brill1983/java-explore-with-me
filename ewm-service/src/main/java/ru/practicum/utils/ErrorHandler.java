@@ -6,8 +6,10 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import ru.practicum.exceptions.ElementNotFoundException;
 
+import javax.validation.ConstraintViolationException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
@@ -27,7 +29,7 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleMethodArgumentNotValidExc(MethodArgumentNotValidException e) {
+    public AppiError handleMethodArgumentNotValidExc(MethodArgumentNotValidException e) {
 
         String errors = getErrors(e);
 
@@ -40,27 +42,57 @@ public class ErrorHandler {
                 ", передан неправильный аргумент";
 
         log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
-        return new ErrorResponse(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
+        return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public AppiError handleMethodArgumentTypeMismatchExc(MethodArgumentTypeMismatchException e) {
+
+        String errors = getErrors(e);
+
+        String status = HttpStatus.BAD_REQUEST.name();
+        String parameterName = e.getParameter().getParameter().getName();
+        String className = e.getParameter().getContainingClass().getName();
+        String methodName = e.getParameter().getMethod().getName();
+
+        String reason = "В метод: " + methodName + ", класса: " + className + ", в параметр: " + parameterName +
+                ", передан неправильный аргумент";
+
+        log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
+        return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public AppiError handleConstraintViolationExc(ConstraintViolationException e) {
+
+        String errors = getErrors(e);
+
+        String status = HttpStatus.CONFLICT.name();
+        String reason = "Нарушение целостности данных";
+        log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
+        return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleOtherExc(Throwable e) {
+    public AppiError handleOtherExc(Throwable e) {
         log.info("Error: ", e);
         String errors = getErrors(e);
         String reason = "Unexpected error";
-        return new ErrorResponse(errors, e.getMessage(), reason, HttpStatus.INTERNAL_SERVER_ERROR.name(), LocalDateTime.now().format(DATE_FORMAT));
+        return new AppiError(errors, e.getMessage(), reason, HttpStatus.INTERNAL_SERVER_ERROR.name(), LocalDateTime.now().format(DATE_FORMAT));
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleNotFoundExc(ElementNotFoundException e) {
+    public AppiError handleNotFoundExc(ElementNotFoundException e) {
 
         String errors = getErrors(e);
         String reason = "The required object was not found.";
 
         log.info("Element not found: {}", e.getMessage());
-        return new ErrorResponse(errors, e.getMessage(), reason, HttpStatus.NOT_FOUND.name(), LocalDateTime.now().format(DATE_FORMAT));
+        return new AppiError(errors, e.getMessage(), reason, HttpStatus.NOT_FOUND.name(), LocalDateTime.now().format(DATE_FORMAT));
     }
 
     private String getErrors(Throwable e) {

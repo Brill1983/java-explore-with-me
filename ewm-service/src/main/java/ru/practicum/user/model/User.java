@@ -13,7 +13,7 @@ import javax.persistence.*;
 public class User {
 
     @Id
-    @Column(updatable = false) // TODO проверить поведение
+    @Column(updatable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 

@@ -21,4 +21,11 @@ public class CategoryMapper {
                 newCategoryDto.getName()
         );
     }
+
+    public Category toCategory(CategoryDto categoryDto, Category category) {
+        return new Category(
+                categoryDto.getId(),
+                categoryDto.getName() != null ? categoryDto.getName() : category.getName()
+        );
+    }
 }
