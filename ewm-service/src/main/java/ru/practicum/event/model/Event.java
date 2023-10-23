@@ -2,7 +2,8 @@ package ru.practicum.event.model;
 
 import lombok.*;
 import ru.practicum.category.model.Category;
-import ru.practicum.location.model.Location;
+import ru.practicum.event.State;
+import ru.practicum.location.model.LocationEntity;
 import ru.practicum.user.model.User;
 
 import javax.persistence.*;
@@ -24,7 +25,7 @@ public class Event {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id")
-    private User initiatorId;
+    private User initiator;
 
     @Column(name = "annotation", nullable = false, length = 2000)
     private String annotation;
@@ -41,7 +42,7 @@ public class Event {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id")
-    private Location location;
+    private LocationEntity locationEntity;
 
     @Column(name = "paid", nullable = false)
     private Boolean paid;
@@ -54,6 +55,9 @@ public class Event {
 
     @Column(name = "title", nullable = false, length = 120)
     private String title;
+
+    @Enumerated(EnumType.STRING)
+    private State state;
 
     @Column(name = "published_on")
     private LocalDateTime publishedOn;

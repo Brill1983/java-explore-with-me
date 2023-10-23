@@ -1,25 +1,24 @@
 package ru.practicum.location;
 
 import lombok.experimental.UtilityClass;
-import ru.practicum.location.dto.LocationDto;
-import ru.practicum.location.model.Location;
+import ru.practicum.location.dto.Location;
+import ru.practicum.location.model.LocationEntity;
 
 @UtilityClass
 public class LocationMapper {
 
-    public LocationDto toDto(Location location) {
-        return new LocationDto(
-                location.getId(),
-                location.getLan(),
-                location.getLon()
+    public Location toDto(LocationEntity locationEntity) {
+        return new Location(
+                locationEntity.getLan(),
+                locationEntity.getLon()
         );
     }
 
-    public Location toModel(LocationDto locationDto) {
-        return new Location(
-                locationDto.getId(),
-                locationDto.getLan(),
-                locationDto.getLan()
+    public LocationEntity toModel(Location location) {
+        return new LocationEntity(
+                null,
+                location.getLan(),
+                location.getLan()
         );
     }
 }

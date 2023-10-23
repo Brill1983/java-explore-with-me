@@ -1,6 +1,7 @@
 package ru.practicum.event.dto;
 
 import lombok.*;
+import ru.practicum.location.dto.Location;
 
 import javax.validation.constraints.*;
 
@@ -29,7 +30,7 @@ public class NewEventDto {
 
     @NotNull
     @Positive
-    private Long location;
+    private Location location;
 
     private boolean paid;
 

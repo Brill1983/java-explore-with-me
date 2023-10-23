@@ -18,7 +18,7 @@ public class AdminCategoryController {
 
     private final CategoryService categoryService;
 
-    @GetMapping
+    @PostMapping
     public CategoryDto postCategory(@RequestBody @Valid NewCategoryDto newCategoryDto) {
         log.info("В метод postCategory переданы данные: newCategoryDto = {}", newCategoryDto);
         return categoryService.saveCategory(newCategoryDto);

@@ -11,9 +11,7 @@ import javax.validation.constraints.Min;
 @Getter
 @Setter
 @ToString
-public class LocationDto {
-
-    private long id;
+public class Location {
 
     @Min(value = 0)
     @Max(value = 90)
