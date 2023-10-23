@@ -1,6 +1,8 @@
 package ru.practicum;
 
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpEntity;
@@ -14,20 +16,15 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-//@Service
-//@RequiredArgsConstructor
+@Service
+@RequiredArgsConstructor
 public class StatsClient {
 
-    private final RestTemplate restTemplate;
+    private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${stats-server.url}")
     private final String serverUrl;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-    public StatsClient(RestTemplate restTemplate, String serverUrl) {
-        this.restTemplate = restTemplate;
-        this.serverUrl = serverUrl;
-    }
 
     public EndpointHitDto postHit(EndpointHitDto hit) {
         HttpEntity<EndpointHitDto> requestEntity = new HttpEntity<>(hit);
@@ -47,8 +44,6 @@ public class StatsClient {
 
         URI uriString = uriComponentsBuilder.build().toUri();
 
-        List<VeiwStatsDto> response = restTemplate.getForObject(uriString, List.class);
-
-        return response;
+        return restTemplate.getForObject(uriString, List.class);
     }
 }

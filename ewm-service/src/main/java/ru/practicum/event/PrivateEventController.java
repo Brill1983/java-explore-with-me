@@ -11,6 +11,7 @@ import ru.practicum.event.dto.NewEventDto;
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -22,9 +23,9 @@ public class PrivateEventController {
     private final EventService eventService;
 
     @GetMapping("/{userId}/events")
-    public EventShortDto getCurrentUserEvents(@PathVariable long userId,
-                                              @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
-                                              @RequestParam(defaultValue = "10") @Positive Integer size) {
+    public List<EventShortDto> getCurrentUserEvents(@PathVariable long userId,
+                                                    @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                                    @RequestParam(defaultValue = "10") @Positive Integer size) {
         log.info("В метод getCurrentUserEvents переданы данные: userId = {}, from = {}, size = {}", userId, from, size);
         return eventService.getCurrentUserEvents(userId, from, size);
     }

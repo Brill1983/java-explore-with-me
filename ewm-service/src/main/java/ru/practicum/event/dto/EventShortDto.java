@@ -9,6 +9,7 @@ import ru.practicum.user.dto.UserShortDto;
 @Getter
 @Setter
 @ToString
+@Builder
 public class EventShortDto {
 
     private Long id;
