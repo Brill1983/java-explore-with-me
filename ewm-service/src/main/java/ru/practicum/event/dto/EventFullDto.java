@@ -2,7 +2,7 @@ package ru.practicum.event.dto;
 
 import lombok.*;
 import ru.practicum.category.dto.CategoryDto;
-import ru.practicum.location.model.LocationEntity;
+import ru.practicum.location.dto.LocationDto;
 import ru.practicum.user.dto.UserShortDto;
 
 @NoArgsConstructor
@@ -13,34 +13,19 @@ import ru.practicum.user.dto.UserShortDto;
 public class EventFullDto {
 
     private Long id;
-
     private String annotation;
-
     private CategoryDto category;
-
     private Integer confirmedRequests;
-
     private String createdOn;
-
     private String description;
-
     private String eventDate;
-
     private UserShortDto initiator;
-
-    private LocationEntity locationEntity;
-
+    private LocationDto location;
     private boolean paid;
-
     private int participantLimit;
-
     private String publishedOn;
-
     private boolean requestModeration;
-
     private String state;
-
     private String title;
-
     private Long views;
 }

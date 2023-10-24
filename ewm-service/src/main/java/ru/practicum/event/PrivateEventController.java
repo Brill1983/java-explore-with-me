@@ -33,7 +33,7 @@ public class PrivateEventController {
     @PostMapping("/{userId}/events")
     public EventFullDto postEvent(@PathVariable long userId,
                                   @RequestBody @Valid NewEventDto eventDto) {
-        log.info("В метод postEvent переданы данные: userId = {}, eventDto = {}=", userId, eventDto);
+        log.info("В метод postEvent переданы данные: userId = {}, eventDto = {}", userId, eventDto);
         return eventService.postEvent(userId, eventDto);
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import ru.practicum.exceptions.ConflictException;
 import ru.practicum.exceptions.ElementNotFoundException;
 
 import javax.validation.ConstraintViolationException;
@@ -19,13 +20,6 @@ import static ru.practicum.utils.Constants.DATE_FORMAT;
 @Slf4j
 @RestControllerAdvice
 public class ErrorHandler {
-
-//    @ExceptionHandler
-//    @ResponseStatus(HttpStatus.BAD_REQUEST)
-//    public ErrorResponse handleBadParameterExc(BadParameterException e) {
-//        log.info("Validation: {}", e.getMessage());
-//        return new ErrorResponse(e.getMessage());
-//    }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -93,6 +87,18 @@ public class ErrorHandler {
 
         log.info("Element not found: {}", e.getMessage());
         return new AppiError(errors, e.getMessage(), reason, HttpStatus.NOT_FOUND.name(), LocalDateTime.now().format(DATE_FORMAT));
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public AppiError handleConflictExistExc(ConflictException e) {
+
+        String errors = getErrors(e);
+
+        String status = HttpStatus.CONFLICT.name();
+        String reason = "Конфликт запроса и базы данных";
+        log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
+        return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
     }
 
     private String getErrors(Throwable e) {

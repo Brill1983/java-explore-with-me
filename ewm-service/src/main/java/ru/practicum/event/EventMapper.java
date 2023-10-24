@@ -6,7 +6,7 @@ import ru.practicum.category.model.Category;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.NewEventDto;
 import ru.practicum.event.model.Event;
-import ru.practicum.location.model.LocationEntity;
+import ru.practicum.location.model.Location;
 import ru.practicum.user.UserMapper;
 import ru.practicum.user.model.User;
 
@@ -17,13 +17,13 @@ import static ru.practicum.utils.Constants.DATE_FORMAT;
 @UtilityClass
 public class EventMapper {
 
-    public Event toEvent(NewEventDto newEventDto, User user, Category category, LocationEntity location) {
+    public Event toEvent(NewEventDto newEventDto, User user, Category category, Location location) {
         return Event.builder()
                 .id(0L)
                 .initiator(user)
                 .annotation(newEventDto.getAnnotation())
                 .category(category)
-                .locationEntity(location)
+                .location(location)
                 .description(newEventDto.getDescription())
                 .eventDate(newEventDto.getEventDate() != null ?
                         LocalDateTime.parse(newEventDto.getEventDate(), DATE_FORMAT) : null)

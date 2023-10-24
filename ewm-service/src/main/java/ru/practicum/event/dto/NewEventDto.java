@@ -1,8 +1,9 @@
 package ru.practicum.event.dto;
 
 import lombok.*;
-import ru.practicum.location.dto.Location;
+import ru.practicum.location.dto.LocationDto;
 
+import javax.validation.Valid;
 import javax.validation.constraints.*;
 
 @NoArgsConstructor
@@ -29,8 +30,8 @@ public class NewEventDto {
     private String eventDate;
 
     @NotNull
-    @Positive
-    private Location location;
+    @Valid
+    private LocationDto locationDto;
 
     private boolean paid;
 

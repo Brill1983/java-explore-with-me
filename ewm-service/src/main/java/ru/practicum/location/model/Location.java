@@ -13,7 +13,7 @@ import javax.persistence.*;
 @Table(name = "locations")
 @Getter
 @Setter
-public class LocationEntity {
+public class Location {
 
     @Id
     @Column(updatable = false)

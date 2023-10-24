@@ -4,6 +4,7 @@ import lombok.*;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 
 @NoArgsConstructor
@@ -11,13 +12,15 @@ import javax.validation.constraints.Min;
 @Getter
 @Setter
 @ToString
-public class Location {
+public class LocationDto {
 
     @Min(value = 0)
     @Max(value = 90)
+    @NotNull
     private double lan;
 
     @Min(value = 0)
     @Max(value = 90)
+    @NotNull
     private double lon;
 }

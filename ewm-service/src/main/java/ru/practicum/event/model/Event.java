@@ -3,7 +3,7 @@ package ru.practicum.event.model;
 import lombok.*;
 import ru.practicum.category.model.Category;
 import ru.practicum.event.State;
-import ru.practicum.location.model.LocationEntity;
+import ru.practicum.location.model.Location;
 import ru.practicum.user.model.User;
 
 import javax.persistence.*;
@@ -42,7 +42,8 @@ public class Event {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id")
-    private LocationEntity locationEntity;
+    @ToString.Exclude
+    private Location location;
 
     @Column(name = "paid", nullable = false)
     private Boolean paid;
