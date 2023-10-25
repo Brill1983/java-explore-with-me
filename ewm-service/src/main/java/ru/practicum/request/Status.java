@@ -9,6 +9,7 @@ public enum Status {
     CANCELED,
     REJECTED;
 
+    // TODO возможно это не нужно
     public static Optional<Status> from(String stringStatus) {
         for (Status status : Status.values()) {
             if (status.name().equalsIgnoreCase(stringStatus)) {

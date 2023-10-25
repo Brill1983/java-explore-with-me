@@ -1,7 +1,5 @@
 package ru.practicum.utils;
 
-import ru.practicum.event.dto.NewEventDto;
-
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.time.LocalDateTime;
@@ -12,6 +10,9 @@ public class EventDateValidator implements ConstraintValidator<EventDateConstrai
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
+        if(value == null) {
+            return true;
+        }
         LocalDateTime dateTime = LocalDateTime.parse(value, DATE_FORMAT);
         if(dateTime.isAfter(LocalDateTime.now().plusHours(2))) {
             return true;

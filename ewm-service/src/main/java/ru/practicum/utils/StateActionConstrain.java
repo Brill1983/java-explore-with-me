@@ -5,11 +5,11 @@ import javax.validation.Payload;
 import java.lang.annotation.*;
 
 @Documented
-@Constraint(validatedBy = EventDateValidator.class)
+@Constraint(validatedBy = StateActionValidator.class)
 @Target({ElementType.METHOD, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface EventDateConstrain {
-    String message() default "Дата и время на которые намечено событие не может быть раньше, чем через два часа от текущего момента";
+public @interface StateActionConstrain {
+    String message() default "В поле StateAction объекта класса UpdateEventUserRequestDto передано не верное значение";
 
     Class<?>[] groups() default {};
 

@@ -9,23 +9,36 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.StatsClient;
 import ru.practicum.VeiwStatsDto;
 import ru.practicum.category.CategoryRepository;
+import ru.practicum.category.model.Category;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.NewEventDto;
+import ru.practicum.event.dto.UpdateEventUserRequestDto;
 import ru.practicum.event.model.Event;
+import ru.practicum.exceptions.ConflictException;
 import ru.practicum.exceptions.ElementNotFoundException;
+import ru.practicum.location.LocationMapper;
+import ru.practicum.location.LocationRepository;
+import ru.practicum.location.model.Location;
+import ru.practicum.request.RequestMapper;
 import ru.practicum.request.RequestRepository;
 import ru.practicum.request.Status;
+import ru.practicum.request.dto.EventRequestStatusUpdateRequest;
+import ru.practicum.request.dto.EventRequestStatusUpdateResult;
+import ru.practicum.request.dto.ParticipationRequestDto;
 import ru.practicum.request.model.Request;
 import ru.practicum.user.UserRepository;
+import ru.practicum.user.model.User;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static ru.practicum.utils.Constants.DATE_FORMAT;
+
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class EventServiceImpl implements EventService{
 
     private final EventRepository eventRepository;
@@ -33,12 +46,8 @@ public class EventServiceImpl implements EventService{
     private final CategoryRepository categoryRepository;
     private final StatsClient statsClient;
     private final RequestRepository requestRepository;
+    private final LocationRepository locationRepository;
 
-
-    @Override
-    public EventFullDto postEvent(long userId, NewEventDto eventDto) {
-        return null;
-    }
 
     @Override
     public List<EventShortDto> getCurrentUserEvents(long userId, Integer from, Integer size) {
@@ -51,59 +60,209 @@ public class EventServiceImpl implements EventService{
         return mapEventsToShortDtos(events);
     }
 
-    private List<EventShortDto> mapEventsToShortDtos(List<Event> events) { // TODO доделать Request
+    @Transactional
+    @Override
+    public EventFullDto postEvent(long userId, NewEventDto eventDto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ElementNotFoundException("Пользователь с ID: " + userId + " не найден"));
+        Category category = categoryRepository.findById(eventDto.getCategory())
+                .orElseThrow(() -> new ElementNotFoundException("Категория с ID: " + eventDto.getCategory() + " не найден"));
+
+        Location location = locationRepository.save(LocationMapper.toModel(eventDto.getLocationDto()));
+        Event event = EventMapper.toEvent(eventDto, user, category, location);
+        return EventMapper.toFullDto(event, 0, 0L);
+    }
+
+    @Override
+    public EventFullDto getOwnerEvent(long userId, long eventId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new ElementNotFoundException("Пользователь с ID: " + userId + " не найден"));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ElementNotFoundException("События с ID: " + eventId + " не найдено"));
+
+        if (event.getInitiator().getId() != userId) {
+            throw new ConflictException("Событие с ID: " + eventId + ", создано пользователем с ID: " +
+                    event.getInitiator().getId() + ", а не пользователем с ID: " + userId);
+        }
+        return mapEventsToFullDtos(List.of(event)).get(0);
+    }
+
+    @Transactional
+    @Override
+    public EventFullDto patchCurrentUserEvent(long userId, long eventId, UpdateEventUserRequestDto eventDto) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new ElementNotFoundException("Пользователь с ID: " + userId + " не найден"));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ElementNotFoundException("События с ID: " + eventId + " не найдено"));
+        Category category = null;
+        if (eventDto.getCategory() != null) {
+            category = categoryRepository.findById(eventDto.getCategory())
+                    .orElseThrow(() -> new ElementNotFoundException("Категория с ID: " + eventDto.getCategory() + " не найдена"));
+        }
+        if (event.getInitiator().getId() != userId) {
+            throw new ConflictException("Событие с ID: " + eventId + ", создано пользователем с ID: " +
+                    event.getInitiator().getId() + ", а не пользователем с ID: " + userId);
+        }
+        if (event.getState().equals(State.PUBLISHED)) {
+            throw new ConflictException("Изменять можно только отмененные или еще не опубликованные события");
+        }
+        Event eventFromDto = EventMapper.toEventFromUpdateDto(event, eventDto, category);
+        return mapEventsToFullDtos(List.of(eventFromDto)).get(0);
+    }
+
+    @Override
+    public List<ParticipationRequestDto> getRequestsForOwnersEvent(long userId, long eventId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new ElementNotFoundException("Пользователь с ID: " + userId + " не найден"));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ElementNotFoundException("События с ID: " + eventId + " не найдено"));
+        if (event.getInitiator().getId() != userId) {
+            throw new ConflictException("Событие с ID: " + eventId + ", создано пользователем с ID: " +
+                    event.getInitiator().getId() + ", а не пользователем с ID: " + userId);
+        }
+
+        return requestRepository.findAllByEvent_Initiator_IdAndEvent_Id(eventId, userId).stream()
+                .map(RequestMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public EventRequestStatusUpdateResult patchRequestsForOwnersEvent(long userId, long eventId,
+                                                                      EventRequestStatusUpdateRequest updateRequest) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new ElementNotFoundException("Пользователь с ID: " + userId + " не найден"));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ElementNotFoundException("События с ID: " + eventId + " не найдено"));
+        if (event.getInitiator().getId() != userId) {
+            throw new ConflictException("Событие с ID: " + eventId + ", создано пользователем с ID: " +
+                    event.getInitiator().getId() + ", а не пользователем с ID: " + userId);
+        }
+
+        if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
+            // TODO подтверждение не требуется -> все заявки и так CONFIRMED - сразу выводит ответ
+            //TODO return и Маппер
+        } else { // TODO без else можно обойтись
+            Integer confirmRequests = requestRepository.countAllByStatusAndEvent_Id(Status.CONFIRMED, eventId);
+            if (event.getParticipantLimit() <= confirmRequests) {
+                throw new ConflictException("На событие с ID: " + eventId +
+                        " уже зарегистрировано максимально кол-во участников: " + confirmRequests);
+            }
+
+            List<Request> requestList = requestRepository.findAllByIdIn(updateRequest.getRequestIds());
+
+            Integer counter = 0;
+            Integer requestsToUpdate = event.getParticipantLimit() - confirmRequests;
+            List<Long> requestsIdsForUpdate = new ArrayList<>(requestsToUpdate);
+            List<Long> requestsIdsForReject = new ArrayList<>(confirmRequests);
+
+            for (Request request : requestList) {
+                if (!request.getStatus().equals(Status.PENDING)) {
+                    throw new ConflictException("У запроса с ID: " + request.getId() + "статус: " + request.getStatus() +
+                            ", ожидалось PENDING");
+                }
+                if (request.getEvent().getId() != eventId) {
+                    throw new ConflictException("Запрос с ID: " + request.getId() + "относится к событию с ID: "
+                            + request.getEvent().getId() + ", а не к событию с " + eventId);
+                }
+                if (counter < requestsToUpdate) {
+                    requestsIdsForUpdate.add(request.getId());
+                    counter++;
+                } else {
+                    requestsIdsForReject.add(request.getId());
+                }
+            }
+            requestRepository.requestStatusUpdate(Status.valueOf(updateRequest.getStatus()), requestsIdsForUpdate);
+            if (!requestsIdsForReject.isEmpty()) {
+                requestRepository.requestStatusUpdate(Status.REJECTED, requestsIdsForUpdate);
+            }
+        }
+        // TODO маппинг и составление ответа
+        return null;
+    }
+
+    private List<EventShortDto> mapEventsToShortDtos(List<Event> events) {
         Optional<LocalDateTime> start = events.stream() // получаем самую ранюю дату публикации
                 .map(Event::getPublishedOn)
                 .min(LocalDateTime::compareTo);
-
         List<Long> eventsIds = events.stream() // Формируем список с ID мероприятий для передачи в запрос requestRepository на получение списка запрсоов
                 .map(Event::getId)
                 .collect(Collectors.toList());
 
-        List<String> uries = eventsIds.stream() // Формируем список URL для передачи в запрос getStats сервера статистики
-                .map(id -> "/event/" + id)
-                .collect(Collectors.toList());
-
         List<EventShortDto> eventShortDtoList = new ArrayList<>(); // Объявляем список EventShortDto для возврата из метода
-//        List<Request> requestList = new ArrayList<>();
-
         if (start.isPresent()) { // если у событий из списка есть хотя бы одна дата публикации, то:
             // запрашиваем сервер статистики через getStats на получение списка ДТО уникальных просмотров
-            // TODO отсюда можно в отдельный метод
-            List<VeiwStatsDto> veiwStatsDtoList = statsClient.getStats(start.get(), LocalDateTime.now(), uries, true);
-
-            Map<Long, Long> veiws = new HashMap<>(); // Объявляем Мапу <eventId, кол-во_просмотров>
-
-            for (VeiwStatsDto veiwStatsDto : veiwStatsDtoList) { // проходим по списку ДТО просмотров
-                String uri = veiwStatsDto.getUri(); // получаем строку URI из ДТО просмотра
-                Long eventId = Long.parseLong(uri.substring(uri.lastIndexOf("/") + 1)); // отрезаем от строки номер события и преобразуем а Long
-                veiws.put(eventId, veiwStatsDto.getHits()); // заполняем мапу
-            }
-            // TODO до сюда
-            // TODO отсюда можно в отдельный метод
-            List<Request> requestList = requestRepository.findAllByStatusAndEvent_IdIn(Status.CONFIRMED, eventsIds);
-            Map<Long, Integer> eventsRequests = new HashMap<>();
-            for (Request request : requestList) {
-                if (eventsRequests.containsKey(request.getId())) {
-                    Integer count = eventsRequests.get(request.getId());
-                    eventsRequests.put(request.getId(), ++count);
-                } else {
-                    eventsRequests.put(request.getId(), 1);
-                }
-            }
-            // TODO до сюда
+            Map<Long, Long> veiws = getStatsForEvents(start.get(), eventsIds);
+            Map<Long, Integer> eventsRequests = getEventRequests(Status.CONFIRMED, eventsIds);
             for (Event event : events) { // мапим список Событий на ДТО, заполняем поле запросов и просмотров, если просмотров не было - то 0
                 eventShortDtoList.add(
                         EventMapper.toShortDto(event, eventsRequests.getOrDefault(event.getId(), 0), veiws.getOrDefault(event.getId(), 0L))
                 );
             }
-
-        } else { // если у событий из списка не было публикаций - то просмотры везде 0
+        } else { // если у событий из списка вообще не было публикаций - то просмотры везде 0 и запросы везде 0
             for (Event event : events) {
                 eventShortDtoList.add(EventMapper.toShortDto(event, 0, 0L));
             }
         }
 
         return eventShortDtoList;
+    }
+
+    private List<EventFullDto> mapEventsToFullDtos(List<Event> events) {
+        Optional<LocalDateTime> start = events.stream() // получаем самую ранюю дату публикации
+                .map(Event::getPublishedOn)
+                .min(LocalDateTime::compareTo);
+        List<Long> eventsIds = events.stream() // Формируем список с ID мероприятий для передачи в запрос requestRepository на получение списка запрсоов
+                .map(Event::getId)
+                .collect(Collectors.toList());
+
+        List<EventFullDto> eventShortDtoList = new ArrayList<>(); // Объявляем список EventShortDto для возврата из метода
+        if (start.isPresent()) { // если у событий из списка есть хотя бы одна дата публикации, то:
+            // запрашиваем сервер статистики через getStats на получение списка ДТО уникальных просмотров
+            Map<Long, Long> veiws = getStatsForEvents(start.get(), eventsIds);
+            Map<Long, Integer> eventsRequests = getEventRequests(Status.CONFIRMED, eventsIds);
+            for (Event event : events) { // мапим список Событий на ДТО, заполняем поле запросов и просмотров, если просмотров не было - то 0
+                eventShortDtoList.add(
+                        EventMapper.toFullDto(event, eventsRequests.getOrDefault(event.getId(), 0), veiws.getOrDefault(event.getId(), 0L))
+                );
+            }
+        } else { // если у событий из списка вообще не было публикаций - то просмотры везде 0 и запросы везде 0
+            for (Event event : events) {
+                eventShortDtoList.add(EventMapper.toFullDto(event, 0, 0L));
+            }
+        }
+
+        return eventShortDtoList;
+    }
+
+    private Map<Long, Long> getStatsForEvents(LocalDateTime start, List<Long> eventsIds) {
+
+        List<String> uries = eventsIds.stream() // Формируем список URL для передачи в запрос getStats сервера статистики
+                .map(id -> "/event/" + id)
+                .collect(Collectors.toList());
+
+        List<VeiwStatsDto> veiwStatsDtoList = statsClient.getStats(start, LocalDateTime.now(), uries, true);
+
+        Map<Long, Long> veiws = new HashMap<>(); // Объявляем Мапу <eventId, кол-во_просмотров>
+
+        for (VeiwStatsDto veiwStatsDto : veiwStatsDtoList) { // проходим по списку ДТО просмотров
+            String uri = veiwStatsDto.getUri(); // получаем строку URI из ДТО просмотра
+            Long eventId = Long.parseLong(uri.substring(uri.lastIndexOf("/") + 1)); // отрезаем от строки номер события и преобразуем а Long
+            veiws.put(eventId, veiwStatsDto.getHits()); // заполняем мапу
+        }
+        return veiws;
+    }
+
+    private Map<Long, Integer> getEventRequests(Status status, List<Long> eventsIds) {
+        List<Request> requestList = requestRepository.findAllByStatusAndEvent_IdIn(status, eventsIds);
+        Map<Long, Integer> eventsRequests = new HashMap<>();
+        for (Request request : requestList) {
+            if (eventsRequests.containsKey(request.getId())) {
+                Integer count = eventsRequests.get(request.getId());
+                eventsRequests.put(request.getId(), ++count);
+            } else {
+                eventsRequests.put(request.getId(), 1);
+            }
+        }
+        return eventsRequests;
     }
 }

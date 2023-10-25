@@ -42,7 +42,6 @@ public class Event {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id")
-    @ToString.Exclude
     private Location location;
 
     @Column(name = "paid", nullable = false)

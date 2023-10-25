@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class RequestServiceImpl implements RequestService{
 
     private final RequestRepository requestRepository;
@@ -36,6 +36,7 @@ public class RequestServiceImpl implements RequestService{
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     @Override
     public ParticipationRequestDto postRequest(long userId, long eventId) {
         User user = userRepository.findById(userId)
@@ -45,15 +46,16 @@ public class RequestServiceImpl implements RequestService{
         Optional<Request> optionalEvent = requestRepository.findByRequester_IdAndEvent_Id(userId, eventId);
         if (optionalEvent.isPresent()) {
             throw new ConflictException("Запрос от пользователя с ID: " + userId +
-                    ", на мероприятие с ID: " + eventId);
+                    ", на мероприятие с ID: " + eventId + "уже зарегистрирован");
         }
         if (event.getInitiator().getId() == userId) {
-            throw new ConflictException("Мероприятие с ID: " + eventId + ", создано пользователем ID: " + userId);
+            throw new ConflictException("Мероприятие с ID: " + eventId + ", создано пользователем ID: " + userId +
+                    ", нельзя делать запрос на свое мероприятие");
         }
         if (event.getPublishedOn() != null) {
             throw new ConflictException("Мероприятие с ID: " + eventId + ", не опуликовано");
         }
-        Long participantsNumber = requestRepository.countAllByStatusAndEvent_Id(Status.CONFIRMED, eventId);
+        Integer participantsNumber = requestRepository.countAllByStatusAndEvent_Id(Status.CONFIRMED, eventId);
 
         if (participantsNumber != null && participantsNumber >= event.getParticipantLimit() && event.getParticipantLimit() != 0) {
             throw new ConflictException("На мероприятие с ID: " + eventId + ", уже зарегистрировано максимальное кол-во участников");
@@ -68,6 +70,7 @@ public class RequestServiceImpl implements RequestService{
         return RequestMapper.toDto(requestRepository.save(request));
     }
 
+    @Transactional
     @Override
     public ParticipationRequestDto patchRequest(long userId, long requestId) {
         userRepository.findById(userId)
