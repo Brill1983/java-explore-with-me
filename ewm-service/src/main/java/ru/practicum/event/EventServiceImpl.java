@@ -1,6 +1,7 @@
 package ru.practicum.event;
 
 
+import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,12 +35,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ru.practicum.utils.Constants.DATE_FORMAT;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class EventServiceImpl implements EventService{
+public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
@@ -47,6 +46,8 @@ public class EventServiceImpl implements EventService{
     private final StatsClient statsClient;
     private final RequestRepository requestRepository;
     private final LocationRepository locationRepository;
+
+    //________________________________Private Part_____________________________________________________________________
 
 
     @Override
@@ -121,7 +122,7 @@ public class EventServiceImpl implements EventService{
                     event.getInitiator().getId() + ", а не пользователем с ID: " + userId);
         }
 
-        return requestRepository.findAllByEvent_Initiator_IdAndEvent_Id(eventId, userId).stream()
+        return requestRepository.findAllByEvent_Id(eventId).stream()
                 .map(RequestMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -137,48 +138,29 @@ public class EventServiceImpl implements EventService{
             throw new ConflictException("Событие с ID: " + eventId + ", создано пользователем с ID: " +
                     event.getInitiator().getId() + ", а не пользователем с ID: " + userId);
         }
-
         if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
-            // TODO подтверждение не требуется -> все заявки и так CONFIRMED - сразу выводит ответ
-            //TODO return и Маппер
-        } else { // TODO без else можно обойтись
-            Integer confirmRequests = requestRepository.countAllByStatusAndEvent_Id(Status.CONFIRMED, eventId);
-            if (event.getParticipantLimit() <= confirmRequests) {
-                throw new ConflictException("На событие с ID: " + eventId +
-                        " уже зарегистрировано максимально кол-во участников: " + confirmRequests);
-            }
-
-            List<Request> requestList = requestRepository.findAllByIdIn(updateRequest.getRequestIds());
-
-            Integer counter = 0;
-            Integer requestsToUpdate = event.getParticipantLimit() - confirmRequests;
-            List<Long> requestsIdsForUpdate = new ArrayList<>(requestsToUpdate);
-            List<Long> requestsIdsForReject = new ArrayList<>(confirmRequests);
-
-            for (Request request : requestList) {
-                if (!request.getStatus().equals(Status.PENDING)) {
-                    throw new ConflictException("У запроса с ID: " + request.getId() + "статус: " + request.getStatus() +
-                            ", ожидалось PENDING");
-                }
-                if (request.getEvent().getId() != eventId) {
-                    throw new ConflictException("Запрос с ID: " + request.getId() + "относится к событию с ID: "
-                            + request.getEvent().getId() + ", а не к событию с " + eventId);
-                }
-                if (counter < requestsToUpdate) {
-                    requestsIdsForUpdate.add(request.getId());
-                    counter++;
-                } else {
-                    requestsIdsForReject.add(request.getId());
-                }
-            }
-            requestRepository.requestStatusUpdate(Status.valueOf(updateRequest.getStatus()), requestsIdsForUpdate);
-            if (!requestsIdsForReject.isEmpty()) {
-                requestRepository.requestStatusUpdate(Status.REJECTED, requestsIdsForUpdate);
-            }
+            return mapRequestsAndFormResult(eventId);
         }
-        // TODO маппинг и составление ответа
+
+        updateRequestStatus(event, updateRequest);
+
+        return mapRequestsAndFormResult(eventId);
+    }
+
+    //________________________________ Admin Part_____________________________________________________________________
+
+    @Override
+    public List<EventFullDto> getAdminFullEvent(List<Long> users, List<String> states, List<Long> categories,
+                                                String rangeStart, String rangeEnd, int from, int size) {
+
+        Pageable page = PageRequest.of(from / size, size);
+
+//        BooleanExpression byUsersId =
+
         return null;
     }
+
+    //________________________________ Util Part_____________________________________________________________________
 
     private List<EventShortDto> mapEventsToShortDtos(List<Event> events) {
         Optional<LocalDateTime> start = events.stream() // получаем самую ранюю дату публикации
@@ -265,4 +247,55 @@ public class EventServiceImpl implements EventService{
         }
         return eventsRequests;
     }
+
+    private EventRequestStatusUpdateResult mapRequestsAndFormResult(long eventId) {
+        List<ParticipationRequestDto> confirmedRequests = new ArrayList<>();
+        List<ParticipationRequestDto> rejectedRequests = new ArrayList<>();
+        List<Request> requestsList = requestRepository.findAllByEvent_Id(eventId);
+        for (Request request : requestsList) {
+            if (request.getStatus().equals(Status.REJECTED)) {
+                rejectedRequests.add(RequestMapper.toDto(request));
+            } else if (request.getStatus().equals(Status.CONFIRMED)) {
+                confirmedRequests.add(RequestMapper.toDto(request));
+            }
+        }
+        return new EventRequestStatusUpdateResult(confirmedRequests, rejectedRequests);
+    }
+
+    private void updateRequestStatus(Event event, EventRequestStatusUpdateRequest updateRequest) {
+        Integer confirmRequests = requestRepository.countAllByStatusAndEvent_Id(Status.CONFIRMED, event.getId());
+        if (event.getParticipantLimit() <= confirmRequests) {
+            throw new ConflictException("На событие с ID: " + event.getId() +
+                    " уже зарегистрировано максимально кол-во участников: " + confirmRequests);
+        }
+
+        List<Request> requestList = requestRepository.findAllByIdIn(updateRequest.getRequestIds());
+
+        int counter = 0;
+        int requestsToUpdate = event.getParticipantLimit() - confirmRequests;
+        List<Long> requestsIdsForUpdate = new ArrayList<>(requestsToUpdate);
+        List<Long> requestsIdsForReject = new ArrayList<>(confirmRequests);
+
+        for (Request request : requestList) {
+            if (!request.getStatus().equals(Status.PENDING)) {
+                throw new ConflictException("У запроса с ID: " + request.getId() + "статус: " + request.getStatus() +
+                        ", ожидалось PENDING");
+            }
+            if (!Objects.equals(request.getEvent().getId(), event.getId())) {
+                throw new ConflictException("Запрос с ID: " + request.getId() + "относится к событию с ID: "
+                        + request.getEvent().getId() + ", а не к событию с " + event.getId());
+            }
+            if (counter < requestsToUpdate) {
+                requestsIdsForUpdate.add(request.getId());
+                counter++;
+            } else {
+                requestsIdsForReject.add(request.getId());
+            }
+        }
+        requestRepository.requestStatusUpdate(Status.valueOf(updateRequest.getStatus()), requestsIdsForUpdate);
+        if (!requestsIdsForReject.isEmpty()) {
+            requestRepository.requestStatusUpdate(Status.REJECTED, requestsIdsForUpdate);
+        }
+    }
+
 }

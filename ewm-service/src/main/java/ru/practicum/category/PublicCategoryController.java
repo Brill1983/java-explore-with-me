@@ -21,7 +21,7 @@ public class PublicCategoryController {
 
     @GetMapping
     public List<CategoryDto> getCategories(@RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
-                                      @RequestParam(defaultValue = "10") @Positive Integer size) {
+                                           @RequestParam(defaultValue = "10") @Positive Integer size) {
         log.info("В метод getCategories переданы данные: from = {}, size = {}", from, size);
         return categoryService.getCategories(from, size);
     }

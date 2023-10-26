@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import ru.practicum.exceptions.BadParameterException;
 import ru.practicum.exceptions.ConflictException;
 import ru.practicum.exceptions.ElementNotFoundException;
 
@@ -62,7 +63,6 @@ public class ErrorHandler {
     public AppiError handleConstraintViolationExc(ConstraintViolationException e) {
 
         String errors = getErrors(e);
-
         String status = HttpStatus.CONFLICT.name();
         String reason = "Нарушение целостности данных";
         log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
@@ -84,7 +84,6 @@ public class ErrorHandler {
 
         String errors = getErrors(e);
         String reason = "The required object was not found.";
-
         log.info("Element not found: {}", e.getMessage());
         return new AppiError(errors, e.getMessage(), reason, HttpStatus.NOT_FOUND.name(), LocalDateTime.now().format(DATE_FORMAT));
     }
@@ -94,9 +93,19 @@ public class ErrorHandler {
     public AppiError handleConflictExistExc(ConflictException e) {
 
         String errors = getErrors(e);
-
         String status = HttpStatus.CONFLICT.name();
         String reason = "Конфликт запроса и базы данных";
+        log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
+        return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public AppiError handleBadParameterExc(BadParameterException e) {
+
+        String errors = getErrors(e);
+        String status = HttpStatus.BAD_REQUEST.name();
+        String reason = "Передан неправильный параметр запроса";
         log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
         return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
     }

@@ -1,6 +1,7 @@
 package ru.practicum.request;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import ru.practicum.request.model.Request;
 
@@ -17,8 +18,9 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
 
     List<Request> findAllByStatusAndEvent_IdIn(Status status, List<Long> eventsIds);
 
-    List<Request> findAllByEvent_Initiator_IdAndEvent_Id(long eventId, long userId);
+    List<Request> findAllByEvent_Id(long eventId);
 
+    @Modifying
     @Query("update Request as r set r.status = ?1 where r.id in ?2")
     void requestStatusUpdate(Status status, List<Long> id);
 

@@ -23,4 +23,6 @@ public interface EventService {
     List<ParticipationRequestDto> getRequestsForOwnersEvent(long userId, long eventId);
 
     EventRequestStatusUpdateResult patchRequestsForOwnersEvent(long userId, long eventId, EventRequestStatusUpdateRequest updateRequest);
+
+    List<EventFullDto> getAdminFullEvent(List<Long> users, List<String> states, List<Long> categories, String rangeStart, String rangeEnd, int from, int size);
 }
