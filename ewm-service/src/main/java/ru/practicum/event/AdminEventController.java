@@ -3,11 +3,9 @@ package ru.practicum.event;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.practicum.event.dto.EventFullDto;
+import ru.practicum.event.dto.UpdateEventAdminRequest;
 import ru.practicum.exceptions.BadParameterException;
 
 import javax.validation.constraints.Positive;
@@ -44,6 +42,14 @@ public class AdminEventController {
             throw new BadParameterException("Начало не может быть позже окончания периода");
         }
 
-        return eventService.getAdminFullEvent(users, states, categories, rangeStart, rangeEnd, from, size);
+        return eventService.getAdminFullEvent(users, states, categories, start, end, from, size);
+    }
+
+    @PatchMapping("/{eventId}")
+    public EventFullDto patchEvent(@PathVariable long eventId,
+                                   @RequestBody UpdateEventAdminRequest eventDto) {
+        log.info("В метод patchEvent переданы данные: eventId = {}, eventDto = {}", eventId, eventDto);
+
+        return eventService.patchAdminEvent(eventId, eventDto);
     }
 }

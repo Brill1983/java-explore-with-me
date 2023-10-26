@@ -3,16 +3,14 @@ package ru.practicum.event;
 import lombok.experimental.UtilityClass;
 import ru.practicum.category.CategoryMapper;
 import ru.practicum.category.model.Category;
-import ru.practicum.event.dto.EventFullDto;
-import ru.practicum.event.dto.EventShortDto;
-import ru.practicum.event.dto.NewEventDto;
-import ru.practicum.event.dto.UpdateEventUserRequestDto;
+import ru.practicum.event.dto.*;
 import ru.practicum.event.model.Event;
 import ru.practicum.location.LocationMapper;
 import ru.practicum.location.model.Location;
 import ru.practicum.user.UserMapper;
 import ru.practicum.user.model.User;
 
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
 import static ru.practicum.utils.Constants.DATE_FORMAT;
@@ -75,10 +73,11 @@ public class EventMapper {
                 .build();
     }
 
-    public Event toEventFromUpdateDto(Event event, UpdateEventUserRequestDto eventDto, Category category) {
+    public Event toEventFromUserUpdateDto(Event event, UpdateEventUserRequest eventDto, Category category) {
         Event eventFromDto = Event.builder()
                 .id(event.getId())
                 .initiator(event.getInitiator())
+                .annotation(eventDto.getAnnotation() != null ? eventDto.getAnnotation() : event.getAnnotation())
                 .category(category)
                 .description(eventDto.getDescription() != null ? eventDto.getDescription() : event.getDescription())
                 .eventDate(eventDto.getEventDate() != null ? LocalDateTime.parse(eventDto.getEventDate(), DATE_FORMAT) :
@@ -91,10 +90,48 @@ public class EventMapper {
                 .requestModeration(eventDto.getRequestModeration() != null ? eventDto.getRequestModeration() :
                         event.getRequestModeration())
                 .title(eventDto.getTitle() != null ? eventDto.getTitle() : event.getTitle())
+                .createdOn(event.getCreatedOn())
+                .publishedOn(event.getPublishedOn())
                 .build();
         if (eventDto.getStateAction() != null) {
-            eventFromDto.setState(StateAction.valueOf(eventDto.getStateAction()).equals(StateAction.SEND_TO_REVIEW) ?
-                    State.PENDING : State.CANCELED);
+            eventFromDto.setState(
+                    UserStateAction.valueOf(eventDto.getStateAction())
+                    .equals(UserStateAction.SEND_TO_REVIEW) ?
+                            State.PENDING :
+                            State.CANCELED
+            );
+        } else {
+            eventFromDto.setState(event.getState());
+        }
+        return eventFromDto;
+    }
+
+    public Event toEventFromAdminUpdateDto(Event event, UpdateEventAdminRequest eventDto, Category category) {
+        Event eventFromDto = Event.builder()
+                .id(event.getId())
+                .initiator(event.getInitiator())
+                .annotation(eventDto.getAnnotation() != null ? eventDto.getAnnotation() : event.getAnnotation())
+                .category(category)
+                .description(eventDto.getDescription() != null ? eventDto.getDescription() : event.getDescription())
+                .eventDate(eventDto.getEventDate() != null ? LocalDateTime.parse(eventDto.getEventDate(), DATE_FORMAT) :
+                        event.getEventDate())
+                .location(eventDto.getLocation() != null ? LocationMapper.toModel(eventDto.getLocation()) :
+                        event.getLocation())
+                .paid(eventDto.getPaid() != null ? eventDto.getPaid() : event.getPaid())
+                .participantLimit(eventDto.getParticipantLimit() != null ? eventDto.getParticipantLimit() :
+                        event.getParticipantLimit())
+                .requestModeration(eventDto.getRequestModeration() != null ? eventDto.getRequestModeration() :
+                        event.getRequestModeration())
+                .title(eventDto.getTitle() != null ? eventDto.getTitle() : event.getTitle())
+                .createdOn(event.getCreatedOn())
+                .build();
+        if (eventDto.getStateAction() != null) {
+            if (AdminStateAction.valueOf(eventDto.getStateAction()).equals(AdminStateAction.PUBLISH_EVENT)) {
+                eventFromDto.setState(State.PUBLISHED);
+                eventFromDto.setPublishedOn(LocalDateTime.now());
+            } else {
+                eventFromDto.setState(State.CANCELED);
+            }
         } else {
             eventFromDto.setState(event.getState());
         }

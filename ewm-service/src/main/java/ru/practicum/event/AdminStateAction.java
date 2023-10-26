@@ -1,15 +1,13 @@
 package ru.practicum.event;
 
-import ru.practicum.request.Status;
-
 import java.util.Optional;
 
-public enum StateAction {
-    SEND_TO_REVIEW,
-    CANCEL_REVIEW;
+public enum AdminStateAction {
+    PUBLISH_EVENT,
+    REJECT_EVENT;
 
-    public static Optional<StateAction> from(String stateAction) {
-        for (StateAction state : StateAction.values()) {
+    public static Optional<AdminStateAction> from(String stateAction) {
+        for (AdminStateAction state : AdminStateAction.values()) {
             if (state.name().equalsIgnoreCase(stateAction)) {
                 return Optional.of(state);
             }

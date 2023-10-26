@@ -1,13 +1,11 @@
 package ru.practicum.event;
 
-import ru.practicum.event.dto.EventFullDto;
-import ru.practicum.event.dto.EventShortDto;
-import ru.practicum.event.dto.NewEventDto;
-import ru.practicum.event.dto.UpdateEventUserRequestDto;
+import ru.practicum.event.dto.*;
 import ru.practicum.request.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.request.dto.EventRequestStatusUpdateResult;
 import ru.practicum.request.dto.ParticipationRequestDto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface EventService {
@@ -18,11 +16,15 @@ public interface EventService {
 
     EventFullDto getOwnerEvent(long userId, long eventId);
 
-    EventFullDto patchCurrentUserEvent(long userId, long eventId, UpdateEventUserRequestDto eventDto);
+    EventFullDto patchCurrentUserEvent(long userId, long eventId, UpdateEventUserRequest eventDto);
 
     List<ParticipationRequestDto> getRequestsForOwnersEvent(long userId, long eventId);
 
     EventRequestStatusUpdateResult patchRequestsForOwnersEvent(long userId, long eventId, EventRequestStatusUpdateRequest updateRequest);
 
-    List<EventFullDto> getAdminFullEvent(List<Long> users, List<String> states, List<Long> categories, String rangeStart, String rangeEnd, int from, int size);
+    List<EventFullDto> getAdminFullEvent(List<Long> users, List<String> states, List<Long> categories, LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size);
+
+    EventFullDto patchAdminEvent(long eventId, UpdateEventAdminRequest eventDto);
+
+    List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid, LocalDateTime start, LocalDateTime end, boolean onlyAvailable, String sort, int from, int size);
 }

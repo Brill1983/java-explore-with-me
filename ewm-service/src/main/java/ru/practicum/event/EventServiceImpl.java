@@ -1,8 +1,9 @@
 package ru.practicum.event;
 
 
-import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.BooleanBuilder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -11,11 +12,9 @@ import ru.practicum.StatsClient;
 import ru.practicum.VeiwStatsDto;
 import ru.practicum.category.CategoryRepository;
 import ru.practicum.category.model.Category;
-import ru.practicum.event.dto.EventFullDto;
-import ru.practicum.event.dto.EventShortDto;
-import ru.practicum.event.dto.NewEventDto;
-import ru.practicum.event.dto.UpdateEventUserRequestDto;
+import ru.practicum.event.dto.*;
 import ru.practicum.event.model.Event;
+import ru.practicum.event.model.QEvent;
 import ru.practicum.exceptions.ConflictException;
 import ru.practicum.exceptions.ElementNotFoundException;
 import ru.practicum.location.LocationMapper;
@@ -90,7 +89,7 @@ public class EventServiceImpl implements EventService {
 
     @Transactional
     @Override
-    public EventFullDto patchCurrentUserEvent(long userId, long eventId, UpdateEventUserRequestDto eventDto) {
+    public EventFullDto patchCurrentUserEvent(long userId, long eventId, UpdateEventUserRequest eventDto) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new ElementNotFoundException("Пользователь с ID: " + userId + " не найден"));
         Event event = eventRepository.findById(eventId)
@@ -107,8 +106,9 @@ public class EventServiceImpl implements EventService {
         if (event.getState().equals(State.PUBLISHED)) {
             throw new ConflictException("Изменять можно только отмененные или еще не опубликованные события");
         }
-        Event eventFromDto = EventMapper.toEventFromUpdateDto(event, eventDto, category);
-        return mapEventsToFullDtos(List.of(eventFromDto)).get(0);
+        Event eventFromDto = EventMapper.toEventFromUserUpdateDto(event, eventDto, category);
+        Event eventFromDb = eventRepository.save(eventFromDto);
+        return mapEventsToFullDtos(List.of(eventFromDb)).get(0);
     }
 
     @Override
@@ -127,6 +127,7 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     @Override
     public EventRequestStatusUpdateResult patchRequestsForOwnersEvent(long userId, long eventId,
                                                                       EventRequestStatusUpdateRequest updateRequest) {
@@ -151,12 +152,62 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventFullDto> getAdminFullEvent(List<Long> users, List<String> states, List<Long> categories,
-                                                String rangeStart, String rangeEnd, int from, int size) {
+                                                LocalDateTime start, LocalDateTime end, int from, int size) {
 
         Pageable page = PageRequest.of(from / size, size);
+        List<State> stateList = states.stream()
+                .map(State::valueOf)
+                .collect(Collectors.toList());
 
-//        BooleanExpression byUsersId =
+//        BooleanExpression byUsersId = QEvent.event.initiator.id.in(users);
+        BooleanBuilder query = new BooleanBuilder(QEvent.event.initiator.id.in(users)) //TODO проверить как будет реагировать на NULL
+                .and(QEvent.event.state.in(stateList))
+                .and(QEvent.event.category.id.in(categories))
+                .and(QEvent.event.eventDate.between(start, end));
 
+        Page<Event> events = eventRepository.findAll(query, page);
+
+        return mapEventsToFullDtos(events.toList());
+    }
+
+    @Override
+    public EventFullDto patchAdminEvent(long eventId, UpdateEventAdminRequest eventDto) {
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ElementNotFoundException("События с ID: " + eventId + " не найдено"));
+        Category category = null;
+        if (eventDto.getCategory() != null) {
+            category = categoryRepository.findById(eventDto.getCategory())
+                    .orElseThrow(() -> new ElementNotFoundException("Категория с ID: " + eventDto.getCategory() + " не найдена"));
+        }
+
+        if (event.getPublishedOn() != null && event.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
+            throw new ConflictException("Изменять событие можно только не позднее чем за час до его начала");
+        }
+
+        if (eventDto.getStateAction() != null) {
+            if (AdminStateAction.valueOf(eventDto.getStateAction()).equals(AdminStateAction.PUBLISH_EVENT)) {
+                if (!event.getState().equals(State.PENDING)) {
+                    throw new ConflictException("Опубликовать можно только событие имеющее статус PENDING");
+                }
+            } else {
+                if (!event.getState().equals(State.PENDING)) {
+                    throw new ConflictException("Событие можно отклонить, только если оно еще не опубликовано");
+                }
+            }
+        }
+
+        Event eventFromDto = EventMapper.toEventFromAdminUpdateDto(event, eventDto, category);
+
+        Event eventFromDb = eventRepository.save(eventFromDto);
+
+        return mapEventsToFullDtos(List.of(eventFromDb)).get(0);
+    }
+
+    //________________________________ Public Part_____________________________________________________________________
+    @Override
+    public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid, LocalDateTime start,
+                                               LocalDateTime end, boolean onlyAvailable, String sort, int from, int size) {
         return null;
     }
 
