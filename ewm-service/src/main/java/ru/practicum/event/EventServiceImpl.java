@@ -262,7 +262,7 @@ public class EventServiceImpl implements EventService {
 
     //________________________________ Util Part_____________________________________________________________________
 
-    private List<EventShortDto> mapEventsToShortDtos(List<Event> events) {
+    public List<EventShortDto> mapEventsToShortDtos(List<Event> events) {
         Optional<LocalDateTime> start = events.stream() // получаем самую ранюю дату публикации
                 .map(Event::getPublishedOn)
                 .min(LocalDateTime::compareTo);
