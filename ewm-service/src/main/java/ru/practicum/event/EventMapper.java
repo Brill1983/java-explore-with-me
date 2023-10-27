@@ -73,17 +73,16 @@ public class EventMapper {
                 .build();
     }
 
-    public Event toEventFromUserUpdateDto(Event event, UpdateEventUserRequest eventDto, Category category) {
+    public Event toEventFromUserUpdateDto(Event event, UpdateEventUserRequest eventDto, Category category, Location location) {
         Event eventFromDto = Event.builder()
                 .id(event.getId())
                 .initiator(event.getInitiator())
                 .annotation(eventDto.getAnnotation() != null ? eventDto.getAnnotation() : event.getAnnotation())
-                .category(category)
+                .category(category != null ? category : event.getCategory())
                 .description(eventDto.getDescription() != null ? eventDto.getDescription() : event.getDescription())
                 .eventDate(eventDto.getEventDate() != null ? LocalDateTime.parse(eventDto.getEventDate(), DATE_FORMAT) :
                         event.getEventDate())
-                .location(eventDto.getLocation() != null ? LocationMapper.toModel(eventDto.getLocation()) :
-                        event.getLocation())
+                .location(location != null ? location : event.getLocation())
                 .paid(eventDto.getPaid() != null ? eventDto.getPaid() : event.getPaid())
                 .participantLimit(eventDto.getParticipantLimit() != null ? eventDto.getParticipantLimit() :
                         event.getParticipantLimit())
@@ -106,17 +105,16 @@ public class EventMapper {
         return eventFromDto;
     }
 
-    public Event toEventFromAdminUpdateDto(Event event, UpdateEventAdminRequest eventDto, Category category) {
+    public Event toEventFromAdminUpdateDto(Event event, UpdateEventAdminRequest eventDto, Category category, Location location) {
         Event eventFromDto = Event.builder()
                 .id(event.getId())
                 .initiator(event.getInitiator())
                 .annotation(eventDto.getAnnotation() != null ? eventDto.getAnnotation() : event.getAnnotation())
-                .category(category)
+                .category(category != null ? category : event.getCategory())
                 .description(eventDto.getDescription() != null ? eventDto.getDescription() : event.getDescription())
                 .eventDate(eventDto.getEventDate() != null ? LocalDateTime.parse(eventDto.getEventDate(), DATE_FORMAT) :
                         event.getEventDate())
-                .location(eventDto.getLocation() != null ? LocationMapper.toModel(eventDto.getLocation()) :
-                        event.getLocation())
+                .location(location != null ? location : event.getLocation())
                 .paid(eventDto.getPaid() != null ? eventDto.getPaid() : event.getPaid())
                 .participantLimit(eventDto.getParticipantLimit() != null ? eventDto.getParticipantLimit() :
                         event.getParticipantLimit())

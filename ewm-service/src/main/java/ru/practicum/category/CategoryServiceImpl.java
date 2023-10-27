@@ -16,13 +16,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class CategoryServiceImpl implements CategoryService{
+public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
 
     @Override
     public CategoryDto saveCategory(NewCategoryDto newCategoryDto) {
-        Category category =  categoryRepository.save(CategoryMapper.toCategory(newCategoryDto));
+        Category category = categoryRepository.save(CategoryMapper.toCategory(newCategoryDto));
         return CategoryMapper.toCategoryDto(category);
     }
 

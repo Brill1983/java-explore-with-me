@@ -17,7 +17,7 @@ import static ru.practicum.utils.Constants.DATE_FORMAT;
 
 @Slf4j
 @RestController
-@RequestMapping(path = "/admin/event")
+@RequestMapping(path = "/admin/events")
 @RequiredArgsConstructor
 @Validated
 public class AdminEventController {
@@ -36,7 +36,7 @@ public class AdminEventController {
                 "rangeEnd = {}, from = {}, size = {}", users, states, categories, rangeStart, rangeEnd, from, size);
 
         LocalDateTime start = rangeStart != null ? LocalDateTime.parse(rangeStart, DATE_FORMAT) : null;
-        LocalDateTime end = rangeStart != null ? LocalDateTime.parse(rangeEnd, DATE_FORMAT) : null;
+        LocalDateTime end = rangeEnd != null ? LocalDateTime.parse(rangeEnd, DATE_FORMAT) : null;
 
         if ((end != null && start != null) && end.isBefore(start)) {
             throw new BadParameterException("Начало не может быть позже окончания периода");

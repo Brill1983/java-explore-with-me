@@ -9,27 +9,27 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping(path = "/users")
+@RequestMapping(path = "/users/{userId}/requests")
 @RequiredArgsConstructor
 public class PrivateRequestController {
 
     private final RequestService requestService;
 
-    @GetMapping("/{userId}/requests")
+    @GetMapping
     public List<ParticipationRequestDto> getUsersParticipantsRequests(@PathVariable long userId) {
 
         log.info("В метод getUsersParticipantsRequests переданы данные: userId = {}", userId);
         return requestService.getUsersRequests(userId);
     }
 
-    @PostMapping("/{userId}/requests")
+    @PostMapping
     public ParticipationRequestDto postParticipantRequest(@PathVariable long userId,
                                                           @RequestParam long eventId) {
         log.info("В метод getUsersParticipantsRequests переданы данные: userId = {}, eventId = {}", userId, eventId);
         return requestService.postRequest(userId, eventId);
     }
 
-    @PatchMapping("/{userId}/requests/{requestId}cancel")
+    @PatchMapping("/{requestId}/cancel")
     public ParticipationRequestDto patchRequestCancel(@PathVariable long userId,
                                                       @RequestParam long requestId) {
         log.info("В метод patchRequestCancel переданы данные: userId = {}, requestId = {}", userId, requestId);

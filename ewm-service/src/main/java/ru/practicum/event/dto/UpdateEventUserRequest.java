@@ -22,5 +22,4 @@ public class UpdateEventUserRequest extends UpdateEvent {
     @UserStateActionConstrain
     private String stateAction;
 
-
 }
