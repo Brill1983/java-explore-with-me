@@ -3,7 +3,6 @@ package ru.practicum.compilation.dto;
 import lombok.*;
 
 import javax.validation.constraints.Size;
-import java.util.HashSet;
 import java.util.Set;
 
 @NoArgsConstructor
@@ -16,7 +15,7 @@ public class UpdateCompilationRequest {
     @Size(min = 1, max = 50, message = "Наименование подборки содержать не менее 1 и не более 50 симоволов")
     private String title;
 
-    private boolean pinned;
+    private Boolean pinned;
 
     private Set<Long> events;
 

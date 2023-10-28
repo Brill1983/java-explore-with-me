@@ -1,6 +1,7 @@
 package ru.practicum.event;
 
 import ru.practicum.event.dto.*;
+import ru.practicum.event.model.Event;
 import ru.practicum.request.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.request.dto.EventRequestStatusUpdateResult;
 import ru.practicum.request.dto.ParticipationRequestDto;
@@ -34,4 +35,6 @@ public interface EventService {
                                         HttpServletRequest request);
 
     EventFullDto getPublicEventById(long eventId, HttpServletRequest request);
+
+    List<EventShortDto> mapEventsToShortDtos(List<Event> events);
 }
