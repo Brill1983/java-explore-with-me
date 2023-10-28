@@ -9,7 +9,7 @@ public class LocationMapper {
 
     public LocationDto toDto(Location location) {
         return new LocationDto(
-                location.getLan(),
+                location.getLat(),
                 location.getLon()
         );
     }
@@ -17,8 +17,8 @@ public class LocationMapper {
     public Location toModel(LocationDto locationDto) {
         return new Location(
                 null,
-                locationDto.getLan(),
-                locationDto.getLan()
+                locationDto.getLat(),
+                locationDto.getLon()
         );
     }
 }

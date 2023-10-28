@@ -14,13 +14,13 @@ import javax.validation.constraints.NotNull;
 @ToString
 public class LocationDto {
 
-    @Min(value = 0)
+    @Min(value = -90)
     @Max(value = 90)
     @NotNull
-    private double lan;
+    private double lat;
 
-    @Min(value = 0)
-    @Max(value = 90)
+    @Min(value = -180)
+    @Max(value = 180)
     @NotNull
     private double lon;
 }

@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 public class Request {
 
     @Id
-    @Column(updatable = false)
+    @Column(updatable = false, name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -26,11 +26,11 @@ public class Request {
     private LocalDateTime created;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "event_id")
     private Event event;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "requester_id")
     private User requester;
 
     @Enumerated(EnumType.STRING)

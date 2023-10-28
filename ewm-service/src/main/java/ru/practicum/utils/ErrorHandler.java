@@ -3,6 +3,7 @@ package ru.practicum.utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -68,6 +69,19 @@ public class ErrorHandler {
         log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
         return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
     }
+
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public AppiError handleMissingArgumentExc(MissingServletRequestParameterException e) {
+
+        String errors = getErrors(e);
+        String status = HttpStatus.BAD_REQUEST.name();
+        String reason = "Отсутствует аргумент параметра пути";
+        log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
+        return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
+    }
+
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

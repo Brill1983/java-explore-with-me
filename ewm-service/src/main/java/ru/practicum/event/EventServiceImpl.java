@@ -72,7 +72,7 @@ public class EventServiceImpl implements EventService {
         Category category = categoryRepository.findById(eventDto.getCategory())
                 .orElseThrow(() -> new ElementNotFoundException("Категория с ID: " + eventDto.getCategory() + " не найден"));
 
-        Location location = locationRepository.save(LocationMapper.toModel(eventDto.getLocationDto()));
+        Location location = locationRepository.save(LocationMapper.toModel(eventDto.getLocation()));
 
         Event event = eventRepository.save(EventMapper.toEvent(eventDto, user, category, location));
         return EventMapper.toFullDto(event, 0, 0L);

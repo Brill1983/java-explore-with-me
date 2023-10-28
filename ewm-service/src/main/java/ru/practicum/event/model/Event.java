@@ -19,19 +19,19 @@ import java.time.LocalDateTime;
 public class Event {
 
     @Id
-    @Column(updatable = false)
+    @Column(updatable = false, name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "initiator_id")
     private User initiator;
 
     @Column(name = "annotation", nullable = false, length = 2000)
     private String annotation;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "category_id")
     private Category category;
 
     @Column(name = "description", nullable = false, length = 7000)
@@ -41,7 +41,7 @@ public class Event {
     private LocalDateTime eventDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "location_id")
     private Location location;
 
     @Column(name = "paid", nullable = false)
@@ -65,5 +65,4 @@ public class Event {
     @Column(name = "created_on", nullable = false)
     private LocalDateTime createdOn;
 
-//    private Integer confirmedRequests;
 }

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -13,14 +13,14 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-@Service
+@Component
 @RequiredArgsConstructor
 public class StatsClient {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${stats-server.url}")
-    private final String serverUrl;
+//    @Value("${stats-server.url}")
+    private final String serverUrl = "${stats-server.url}"/*"http://localhost:9090"*/;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public EndpointHitDto postHit(EndpointHitDto hit) {
