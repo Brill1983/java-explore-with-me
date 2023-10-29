@@ -19,13 +19,14 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class RequestServiceImpl implements RequestService {
 
     private final RequestRepository requestRepository;
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
 
+    @Transactional(readOnly = true)
     @Override
     public List<ParticipationRequestDto> getUsersRequests(long userId) {
         userRepository.findById(userId)
@@ -36,7 +37,6 @@ public class RequestServiceImpl implements RequestService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
     @Override
     public ParticipationRequestDto postRequest(long userId, long eventId) {
         User user = userRepository.findById(userId)
@@ -52,7 +52,7 @@ public class RequestServiceImpl implements RequestService {
             throw new ConflictException("Мероприятие с ID: " + eventId + ", создано пользователем ID: " + userId +
                     ", нельзя делать запрос на свое мероприятие");
         }
-        if (event.getPublishedOn() != null) {
+        if (event.getPublishedOn() == null) {
             throw new ConflictException("Мероприятие с ID: " + eventId + ", не опуликовано");
         }
         Integer participantsNumber = requestRepository.countAllByStatusAndEvent_Id(Status.CONFIRMED, eventId);
@@ -70,7 +70,6 @@ public class RequestServiceImpl implements RequestService {
         return RequestMapper.toDto(requestRepository.save(request));
     }
 
-    @Transactional
     @Override
     public ParticipationRequestDto patchRequest(long userId, long requestId) {
         userRepository.findById(userId)

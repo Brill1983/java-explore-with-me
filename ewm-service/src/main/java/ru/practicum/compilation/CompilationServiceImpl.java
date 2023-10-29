@@ -78,6 +78,7 @@ public class CompilationServiceImpl implements CompilationService {
         return CompilationMapper.toDto(compilationFromDb, eventShortDtoList);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<CompilationDto> getPublicCompList(Boolean pinned, int from, int size) {
         Pageable page = PageRequest.of(from / size, size);
@@ -114,6 +115,7 @@ public class CompilationServiceImpl implements CompilationService {
         return responseDtoList;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public CompilationDto getPublicCompById(long compId) {
         Compilation compilation = compilationRepository.findById(compId)

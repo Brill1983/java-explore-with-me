@@ -2,6 +2,7 @@ package ru.practicum.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.event.dto.EventFullDto;
@@ -39,8 +40,8 @@ public class PublicEventController {
                         "rangeEnd = {}, onlyAvailable = {}, sort = {}, from = {}, size = {}",
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
 
-        LocalDateTime start = rangeStart != null ? LocalDateTime.parse(rangeStart, DATE_FORMAT) : null;
-        LocalDateTime end = rangeEnd != null ? LocalDateTime.parse(rangeEnd, DATE_FORMAT) : null;
+        LocalDateTime start = !StringUtils.isEmpty(rangeStart) ? LocalDateTime.parse(rangeStart, DATE_FORMAT) : null;
+        LocalDateTime end = !StringUtils.isEmpty(rangeEnd) ? LocalDateTime.parse(rangeEnd, DATE_FORMAT) : null;
 
         if ((end != null && start != null) && end.isBefore(start)) {
             throw new BadParameterException("Начало не может быть позже окончания периода");

@@ -7,6 +7,8 @@ import ru.practicum.utils.EventDateConstrain;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
 
+import static ru.practicum.utils.Constants.DATE_TIME_PATTERN;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -26,7 +28,7 @@ public class NewEventDto {
     @Size(min = 20, max = 7000, message = "Полное описание описание должно содержать не менее 20 и не более 7000 симоволов")
     private String description;
 
-    @Pattern(regexp = "^[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[01]) (([0,1][0-9])|(2[0-3])):[0-5][0-9]:[0-5][0-9]$",
+    @Pattern(regexp = DATE_TIME_PATTERN,
     message = "Формат даты и времени должен соответствовать виду: 'yyyy-MM-dd HH:mm:ss'")
     @NotNull
     @EventDateConstrain

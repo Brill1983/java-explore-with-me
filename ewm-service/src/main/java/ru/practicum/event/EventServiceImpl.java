@@ -3,11 +3,15 @@ package ru.practicum.event;
 
 import com.querydsl.core.BooleanBuilder;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import ru.practicum.EndpointHitDto;
 import ru.practicum.StatsClient;
 import ru.practicum.VeiwStatsDto;
@@ -134,6 +138,7 @@ public class EventServiceImpl implements EventService {
             return mapRequestsAndFormResult(eventId);
         }
 
+
         updateRequestStatus(event, updateRequest);
 
         return mapRequestsAndFormResult(eventId);
@@ -146,21 +151,24 @@ public class EventServiceImpl implements EventService {
                                                 LocalDateTime start, LocalDateTime end, int from, int size) {
 
         Pageable page = PageRequest.of(from / size, size);
-        List<State> stateList = states.stream()
-                .map(State::valueOf)
-                .collect(Collectors.toList());
 
-//        BooleanExpression byUsersId = QEvent.event.initiator.id.in(users);
-        BooleanBuilder query = new BooleanBuilder(QEvent.event.initiator.id.in(users)) //TODO проверить как будет реагировать на NULL
-                .and(QEvent.event.state.in(stateList))
-                .and(QEvent.event.category.id.in(categories))
-                .and(QEvent.event.eventDate.between(start, end));
+        BooleanBuilder query = new BooleanBuilder() //TODO проверить как будет реагировать на NULL
+                .and(!CollectionUtils.isEmpty(users) ? QEvent.event.initiator.id.in(users) : null)
+                .and(!CollectionUtils.isEmpty(categories) ? QEvent.event.category.id.in(categories) : null)
+                .and(start != null ? QEvent.event.eventDate.goe(start) : null)
+                .and(end != null ? QEvent.event.eventDate.loe(end) : null);
 
+        if (!CollectionUtils.isEmpty(states)) {
+            List<State> stateList = states.stream()
+                    .map(State::valueOf)
+                    .collect(Collectors.toList());
+            query.and(QEvent.event.state.in(stateList));
+        }
         Page<Event> events = eventRepository.findAll(query, page);
-
         return mapEventsToFullDtos(events.toList());
     }
 
+    @Transactional
     @Override
     public EventFullDto patchAdminEvent(long eventId, UpdateEventAdminRequest eventDto) {
 
@@ -206,13 +214,14 @@ public class EventServiceImpl implements EventService {
 
         Pageable page = PageRequest.of(from / size, size);
 
-        String regex = "%" + text + "%";
+        String regex = !StringUtils.isEmpty(text) ? "%" + text + "%" : null;
 
-        BooleanBuilder query = new BooleanBuilder(QEvent.event.state.eq(State.PUBLISHED))
-                .and(QEvent.event.description.containsIgnoreCase(regex))
-                .and(QEvent.event.annotation.containsIgnoreCase(regex))
-                .and(QEvent.event.category.id.in(categories))
-                .and(QEvent.event.paid.eq(paid))
+        BooleanBuilder query = new BooleanBuilder()
+                .and(QEvent.event.state.eq(State.PUBLISHED))
+                .and(regex != null ? QEvent.event.description.containsIgnoreCase(regex) : null)
+                .and(regex != null ? QEvent.event.annotation.containsIgnoreCase(regex) : null)
+                .and(!CollectionUtils.isEmpty(categories) ? QEvent.event.category.id.in(categories) : null)
+                .and(paid != null ? QEvent.event.paid.eq(paid) : null)
                 .and((end == null && start == null) ?
                         QEvent.event.eventDate.after(LocalDateTime.now()) :
                         QEvent.event.eventDate.between(start, end));
@@ -264,12 +273,12 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> mapEventsToShortDtos(List<Event> events) {
-        Optional<LocalDateTime> start = events.stream() // получаем самую ранюю дату публикации
-                .map(Event::getPublishedOn)
-                .min(LocalDateTime::compareTo);
+
         List<Long> eventsIds = events.stream() // Формируем список с ID мероприятий для передачи в запрос requestRepository на получение списка запрсоов
                 .map(Event::getId)
                 .collect(Collectors.toList());
+
+        Optional<LocalDateTime> start = eventRepository.getMinPublishedDate(eventsIds);
 
         List<EventShortDto> eventShortDtoList = new ArrayList<>(); // Объявляем список EventShortDto для возврата из метода
         if (start.isPresent()) { // если у событий из списка есть хотя бы одна дата публикации, то:
@@ -291,12 +300,12 @@ public class EventServiceImpl implements EventService {
     }
 
     private List<EventFullDto> mapEventsToFullDtos(List<Event> events) {
-        Optional<LocalDateTime> start = events.stream() // получаем самую ранюю дату публикации
-                .map(Event::getPublishedOn)
-                .min(LocalDateTime::compareTo);
+
         List<Long> eventsIds = events.stream() // Формируем список с ID мероприятий для передачи в запрос requestRepository на получение списка запрсоов
                 .map(Event::getId)
                 .collect(Collectors.toList());
+
+        Optional<LocalDateTime> start = eventRepository.getMinPublishedDate(eventsIds);
 
         List<EventFullDto> eventShortDtoList = new ArrayList<>(); // Объявляем список EventShortDto для возврата из метода
         if (start.isPresent()) { // если у событий из списка есть хотя бы одна дата публикации, то:
@@ -336,7 +345,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private Map<Long, Integer> getEventRequests(Status status, List<Long> eventsIds) {
-        List<Request> requestList = requestRepository.findAllByStatusAndEvent_IdIn(status, eventsIds);
+        List<Request> requestList = requestRepository.findAllByStatusAndEventIdIn(status, eventsIds);
         Map<Long, Integer> eventsRequests = new HashMap<>();
         for (Request request : requestList) {
             if (eventsRequests.containsKey(request.getId())) {

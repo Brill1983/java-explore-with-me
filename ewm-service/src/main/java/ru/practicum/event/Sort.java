@@ -6,8 +6,8 @@ public enum Sort {
     EVENT_DATE,
     VIEWS;
 
-    public static Optional<UserStateAction> from(String stateAction) {
-        for (UserStateAction state : UserStateAction.values()) {
+    public static Optional<Sort> from(String stateAction) {
+        for (Sort state : Sort.values()) {
             if (state.name().equalsIgnoreCase(stateAction)) {
                 return Optional.of(state);
             }

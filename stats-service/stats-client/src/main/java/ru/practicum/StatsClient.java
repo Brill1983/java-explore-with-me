@@ -20,7 +20,7 @@ public class StatsClient {
     private final RestTemplate restTemplate = new RestTemplate();
 
 //    @Value("${stats-server.url}")
-    private final String serverUrl = "${stats-server.url}"/*"http://localhost:9090"*/;
+    private final String serverUrl = "http://localhost:9090";
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public EndpointHitDto postHit(EndpointHitDto hit) {

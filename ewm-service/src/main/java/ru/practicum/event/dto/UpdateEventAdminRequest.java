@@ -5,6 +5,8 @@ import ru.practicum.utils.AdminStateActionConstrain;
 
 import javax.validation.constraints.Pattern;
 
+import static ru.practicum.utils.Constants.DATE_TIME_PATTERN;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -13,7 +15,7 @@ import javax.validation.constraints.Pattern;
 @Builder
 public class UpdateEventAdminRequest extends UpdateEvent {
 
-    @Pattern(regexp = "^[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[01]) (([0,1][0-9])|(2[0-3])):[0-5][0-9]:[0-5][0-9]$",
+    @Pattern(regexp = DATE_TIME_PATTERN,
             message = "Формат даты и времени должен соответствовать виду: 'yyyy-MM-dd HH:mm:ss'")
     private String eventDate;
 
