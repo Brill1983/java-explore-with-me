@@ -1,6 +1,5 @@
 package ru.practicum.event;
 
-import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.event.dto.*;
 import ru.practicum.event.model.Event;
 import ru.practicum.request.dto.EventRequestStatusUpdateRequest;

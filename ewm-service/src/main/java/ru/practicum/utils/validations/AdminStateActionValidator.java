@@ -1,17 +1,17 @@
-package ru.practicum.utils;
+package ru.practicum.utils.validations;
 
-import ru.practicum.request.Status;
+import ru.practicum.event.AdminStateAction;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-public class StatusValidator implements ConstraintValidator<StatusConstrain, String> {
+public class AdminStateActionValidator implements ConstraintValidator<AdminStateActionConstrain, String> {
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
         if (value == null) {
             return true;
         }
-        return Status.from(value).isPresent();
+        return AdminStateAction.from(value).isPresent();
     }
 }

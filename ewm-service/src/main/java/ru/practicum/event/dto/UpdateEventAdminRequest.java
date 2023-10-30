@@ -1,8 +1,8 @@
 package ru.practicum.event.dto;
 
 import lombok.*;
-import ru.practicum.utils.AdminEventDateConstrain;
-import ru.practicum.utils.AdminStateActionConstrain;
+import ru.practicum.utils.validations.AdminEventDateConstrain;
+import ru.practicum.utils.validations.AdminStateActionConstrain;
 
 import javax.validation.constraints.Pattern;
 

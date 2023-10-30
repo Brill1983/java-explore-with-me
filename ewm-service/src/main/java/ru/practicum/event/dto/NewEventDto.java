@@ -2,7 +2,7 @@ package ru.practicum.event.dto;
 
 import lombok.*;
 import ru.practicum.location.dto.LocationDto;
-import ru.practicum.utils.EventDateConstrain;
+import ru.practicum.utils.validations.EventDateConstrain;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -29,7 +29,7 @@ public class NewEventDto {
     private String description;
 
     @Pattern(regexp = DATE_TIME_PATTERN,
-    message = "Формат даты и времени должен соответствовать виду: 'yyyy-MM-dd HH:mm:ss'")
+            message = "Формат даты и времени должен соответствовать виду: 'yyyy-MM-dd HH:mm:ss'")
     @NotNull
     @EventDateConstrain
     private String eventDate;

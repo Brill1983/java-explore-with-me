@@ -1,7 +1,10 @@
 package ru.practicum.compilation.model;
 
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import ru.practicum.event.model.Event;
 
 import javax.persistence.*;
@@ -29,7 +32,7 @@ public class Compilation {
 
     @ManyToMany
     @JoinTable(name = "events_compilations",
-            joinColumns = { @JoinColumn(name = "compilation_id") },
-            inverseJoinColumns = { @JoinColumn(name = "event_id") })
+            joinColumns = {@JoinColumn(name = "compilation_id")},
+            inverseJoinColumns = {@JoinColumn(name = "event_id")})
     private Set<Event> events = new HashSet<>();
 }

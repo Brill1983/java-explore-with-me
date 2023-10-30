@@ -2,7 +2,6 @@ package ru.practicum.event;
 
 import com.querydsl.core.BooleanBuilder;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -146,7 +145,7 @@ public class EventServiceImpl implements EventService {
 
         Pageable page = PageRequest.of(from / size, size);
 
-        BooleanBuilder query = new BooleanBuilder() //TODO проверить как будет реагировать на NULL
+        BooleanBuilder query = new BooleanBuilder()
                 .and(!CollectionUtils.isEmpty(users) ? QEvent.event.initiator.id.in(users) : null)
                 .and(!CollectionUtils.isEmpty(categories) ? QEvent.event.category.id.in(categories) : null)
                 .and(start != null ? QEvent.event.eventDate.goe(start) : null)
@@ -209,14 +208,10 @@ public class EventServiceImpl implements EventService {
 
         Pageable page = PageRequest.of(from / size, size);
 
-        String regex = !StringUtils.isEmpty(text) ? "%" + text + "%" : null;
-
         BooleanBuilder query = new BooleanBuilder()
-                .and(QEvent.event.state.eq(State.PUBLISHED))
-//                .and(regex != null ? QEvent.event.description.matches(regex) : null)
-//                .and(regex != null ? QEvent.event.annotation.matches(regex) : null)
                 .and(text != null ? QEvent.event.annotation.containsIgnoreCase(text) : null)
-                .and(text != null ? QEvent.event.description.containsIgnoreCase(text) : null)
+                .or(text != null ? QEvent.event.description.containsIgnoreCase(text) : null)
+                .and(QEvent.event.state.eq(State.PUBLISHED))
                 .and(!CollectionUtils.isEmpty(categories) ? QEvent.event.category.id.in(categories) : null)
                 .and(paid != null ? QEvent.event.paid.eq(paid) : null)
                 .and((end == null && start == null) ?
@@ -347,9 +342,9 @@ public class EventServiceImpl implements EventService {
         for (Request request : requestList) {
             if (eventsRequests.containsKey(request.getId())) {
                 Integer count = eventsRequests.get(request.getId());
-                eventsRequests.put(request.getId(), ++count);
+                eventsRequests.put(request.getEvent().getId(), ++count);
             } else {
-                eventsRequests.put(request.getId(), 1);
+                eventsRequests.put(request.getEvent().getId(), 1);
             }
         }
         return eventsRequests;

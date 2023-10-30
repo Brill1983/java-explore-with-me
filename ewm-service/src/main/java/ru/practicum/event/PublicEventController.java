@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.exceptions.BadParameterException;
-import ru.practicum.utils.SortConstrain;
+import ru.practicum.utils.validations.SortConstrain;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;

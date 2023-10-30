@@ -109,7 +109,7 @@ public class CompilationServiceImpl implements CompilationService {
                     eventDtosForComp.add(eventShortDto);
                 }
             }
-            CompilationDto compilationDto  = CompilationMapper.toDto(compilation, eventDtosForComp);
+            CompilationDto compilationDto = CompilationMapper.toDto(compilation, eventDtosForComp);
             responseDtoList.add(compilationDto);
         }
 

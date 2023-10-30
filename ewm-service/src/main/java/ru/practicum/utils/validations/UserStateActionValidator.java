@@ -1,17 +1,18 @@
-package ru.practicum.utils;
+package ru.practicum.utils.validations;
 
-import ru.practicum.event.Sort;
+
+import ru.practicum.event.UserStateAction;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-public class SortValidator implements ConstraintValidator<SortConstrain, String> {
+public class UserStateActionValidator implements ConstraintValidator<UserStateActionConstrain, String> {
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
         if (value == null) {
             return true;
         }
-        return Sort.from(value).isPresent();
+        return UserStateAction.from(value).isPresent();
     }
 }

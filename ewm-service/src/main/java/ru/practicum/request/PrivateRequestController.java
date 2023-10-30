@@ -33,7 +33,7 @@ public class PrivateRequestController {
 
     @PatchMapping("/{requestId}/cancel")
     public ParticipationRequestDto patchRequestCancel(@PathVariable long userId,
-                                                      @RequestParam long requestId) {
+                                                      @PathVariable long requestId) {
         log.info("В метод patchRequestCancel переданы данные: userId = {}, requestId = {}", userId, requestId);
         return requestService.patchRequest(userId, requestId);
     }

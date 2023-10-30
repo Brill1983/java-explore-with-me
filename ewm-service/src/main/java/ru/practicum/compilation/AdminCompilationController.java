@@ -28,6 +28,7 @@ public class AdminCompilationController {
         return compilationService.saveCompilation(compilationDto);
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{compId}")
     public void deleteCompilation(@PathVariable long compId) {
         log.info("В метод deleteCompilation переданы данные: compId = {}", compId);

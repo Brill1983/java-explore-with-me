@@ -1,7 +1,7 @@
 package ru.practicum.request.dto;
 
 import lombok.*;
-import ru.practicum.utils.StatusConstrain;
+import ru.practicum.utils.validations.StatusConstrain;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;

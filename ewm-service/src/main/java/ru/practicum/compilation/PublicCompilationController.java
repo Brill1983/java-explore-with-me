@@ -3,10 +3,7 @@ package ru.practicum.compilation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.practicum.compilation.dto.CompilationDto;
 
 import java.util.List;
@@ -19,6 +16,7 @@ import java.util.List;
 public class PublicCompilationController {
 
     private final CompilationService compilationService;
+
     @GetMapping
     public List<CompilationDto> getCompilationList(@RequestParam(required = false) Boolean pinned,
                                                    @RequestParam(defaultValue = "0") int from,
@@ -29,7 +27,7 @@ public class PublicCompilationController {
     }
 
     @GetMapping("/{compId}")
-    public CompilationDto getPublicCompById(@RequestParam long compId) {
+    public CompilationDto getPublicCompById(@PathVariable long compId) {
         log.info("В метод getPublicCompById переданы данные: compId = {}", compId);
         return compilationService.getPublicCompById(compId);
     }

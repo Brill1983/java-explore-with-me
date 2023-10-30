@@ -94,7 +94,7 @@ public class EventMapper {
         if (eventDto.getStateAction() != null) {
             eventFromDto.setState(
                     UserStateAction.valueOf(eventDto.getStateAction())
-                    .equals(UserStateAction.SEND_TO_REVIEW) ?
+                            .equals(UserStateAction.SEND_TO_REVIEW) ?
                             State.PENDING :
                             State.CANCELED
             );
