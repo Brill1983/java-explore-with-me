@@ -1,6 +1,5 @@
 package ru.practicum.event;
 
-
 import com.querydsl.core.BooleanBuilder;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -8,8 +7,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import ru.practicum.EndpointHitDto;
@@ -138,10 +135,7 @@ public class EventServiceImpl implements EventService {
             return mapRequestsAndFormResult(eventId);
         }
 
-
-        updateRequestStatus(event, updateRequest);
-
-        return mapRequestsAndFormResult(eventId);
+        return updateRequestStatusAndMapResult(event, updateRequest);
     }
 
     //________________________________ Admin Part_____________________________________________________________________
@@ -165,6 +159,7 @@ public class EventServiceImpl implements EventService {
             query.and(QEvent.event.state.in(stateList));
         }
         Page<Event> events = eventRepository.findAll(query, page);
+
         return mapEventsToFullDtos(events.toList());
     }
 
@@ -218,8 +213,10 @@ public class EventServiceImpl implements EventService {
 
         BooleanBuilder query = new BooleanBuilder()
                 .and(QEvent.event.state.eq(State.PUBLISHED))
-                .and(regex != null ? QEvent.event.description.containsIgnoreCase(regex) : null)
-                .and(regex != null ? QEvent.event.annotation.containsIgnoreCase(regex) : null)
+//                .and(regex != null ? QEvent.event.description.matches(regex) : null)
+//                .and(regex != null ? QEvent.event.annotation.matches(regex) : null)
+                .and(text != null ? QEvent.event.annotation.containsIgnoreCase(text) : null)
+                .and(text != null ? QEvent.event.description.containsIgnoreCase(text) : null)
                 .and(!CollectionUtils.isEmpty(categories) ? QEvent.event.category.id.in(categories) : null)
                 .and(paid != null ? QEvent.event.paid.eq(paid) : null)
                 .and((end == null && start == null) ?
@@ -329,7 +326,7 @@ public class EventServiceImpl implements EventService {
     private Map<Long, Long> getStatsForEvents(LocalDateTime start, List<Long> eventsIds) {
 
         List<String> uries = eventsIds.stream() // Формируем список URL для передачи в запрос getStats сервера статистики
-                .map(id -> "/event/" + id)
+                .map(id -> "/events/" + id)
                 .collect(Collectors.toList());
 
         List<VeiwStatsDto> veiwStatsDtoList = statsClient.getStats(start, LocalDateTime.now(), uries, true);
@@ -345,7 +342,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private Map<Long, Integer> getEventRequests(Status status, List<Long> eventsIds) {
-        List<Request> requestList = requestRepository.findAllByStatusAndEventIdIn(status, eventsIds);
+        List<Request> requestList = requestRepository.findAllByStatusAndEvent_IdIn(status, eventsIds);
         Map<Long, Integer> eventsRequests = new HashMap<>();
         for (Request request : requestList) {
             if (eventsRequests.containsKey(request.getId())) {
@@ -372,7 +369,7 @@ public class EventServiceImpl implements EventService {
         return new EventRequestStatusUpdateResult(confirmedRequests, rejectedRequests);
     }
 
-    private void updateRequestStatus(Event event, EventRequestStatusUpdateRequest updateRequest) {
+    private EventRequestStatusUpdateResult updateRequestStatusAndMapResult(Event event, EventRequestStatusUpdateRequest updateRequest) {
         Integer confirmRequests = requestRepository.countAllByStatusAndEvent_Id(Status.CONFIRMED, event.getId());
         if (event.getParticipantLimit() <= confirmRequests) {
             throw new ConflictException("На событие с ID: " + event.getId() +
@@ -383,8 +380,11 @@ public class EventServiceImpl implements EventService {
 
         int counter = 0;
         int requestsToUpdate = event.getParticipantLimit() - confirmRequests;
-        List<Long> requestsIdsForUpdate = new ArrayList<>(requestsToUpdate);
+        List<Long> requestsIdsForConfirm = new ArrayList<>(requestsToUpdate);
         List<Long> requestsIdsForReject = new ArrayList<>(confirmRequests);
+
+        List<Request> confirmedRequestList = requestRepository.findAllByEvent_IdAndStatus(event.getId(), Status.CONFIRMED);
+        List<Request> rejectRequestList = requestRepository.findAllByEvent_IdAndStatus(event.getId(), Status.REJECTED);
 
         for (Request request : requestList) {
             if (!request.getStatus().equals(Status.PENDING)) {
@@ -395,17 +395,31 @@ public class EventServiceImpl implements EventService {
                 throw new ConflictException("Запрос с ID: " + request.getId() + "относится к событию с ID: "
                         + request.getEvent().getId() + ", а не к событию с " + event.getId());
             }
-            if (counter < requestsToUpdate) {
-                requestsIdsForUpdate.add(request.getId());
+            if (updateRequest.getStatus().equals(Status.CONFIRMED.name()) && counter < requestsToUpdate) {
+                requestsIdsForConfirm.add(request.getId());
+                request.setStatus(Status.CONFIRMED);
+                confirmedRequestList.add(request);
                 counter++;
             } else {
                 requestsIdsForReject.add(request.getId());
+                request.setStatus(Status.REJECTED);
+                rejectRequestList.add(request);
             }
         }
-        requestRepository.requestStatusUpdate(Status.valueOf(updateRequest.getStatus()), requestsIdsForUpdate);
+        requestRepository.requestStatusUpdate(Status.valueOf(updateRequest.getStatus()), requestsIdsForConfirm);
         if (!requestsIdsForReject.isEmpty()) {
-            requestRepository.requestStatusUpdate(Status.REJECTED, requestsIdsForUpdate);
+            requestRepository.requestStatusUpdate(Status.REJECTED, requestsIdsForConfirm);
         }
+
+        List<ParticipationRequestDto> confirmedRequests = confirmedRequestList.stream()
+                .map(RequestMapper::toDto)
+                .collect(Collectors.toList());
+
+        List<ParticipationRequestDto> rejectedRequests = rejectRequestList.stream()
+                .map(RequestMapper::toDto)
+                .collect(Collectors.toList());
+
+        return new EventRequestStatusUpdateResult(confirmedRequests, rejectedRequests);
     }
 
     private Event checkUserAndEventId(long userId, long eventId) {

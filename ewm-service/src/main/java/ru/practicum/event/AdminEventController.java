@@ -9,6 +9,7 @@ import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.UpdateEventAdminRequest;
 import ru.practicum.exceptions.BadParameterException;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
@@ -50,7 +51,7 @@ public class AdminEventController {
 
     @PatchMapping("/{eventId}")
     public EventFullDto patchEvent(@PathVariable long eventId,
-                                   @RequestBody UpdateEventAdminRequest eventDto) {
+                                   @RequestBody @Valid UpdateEventAdminRequest eventDto) {
         log.info("В метод patchEvent переданы данные: eventId = {}, eventDto = {}", eventId, eventDto);
 
         return eventService.patchAdminEvent(eventId, eventDto);

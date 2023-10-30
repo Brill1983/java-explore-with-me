@@ -112,7 +112,10 @@ public class CompilationServiceImpl implements CompilationService {
             CompilationDto compilationDto  = CompilationMapper.toDto(compilation, eventDtosForComp);
             responseDtoList.add(compilationDto);
         }
-        return responseDtoList;
+
+        return responseDtoList.stream()
+                .sorted(Comparator.comparingLong(CompilationDto::getId))
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

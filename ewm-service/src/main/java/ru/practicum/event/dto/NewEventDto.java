@@ -38,12 +38,12 @@ public class NewEventDto {
     @Valid
     private LocationDto location;
 
-    private boolean paid;
+    private Boolean paid;
 
     @PositiveOrZero
     private int participantLimit;
 
-    private boolean requestModeration;
+    private Boolean requestModeration;
 
     @Size(min = 3, max = 120, message = "Заголовок должн содержать не менее 3 и не более 120 симоволов")
     @NotBlank

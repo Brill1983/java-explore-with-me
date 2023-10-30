@@ -2,6 +2,7 @@ package ru.practicum.user;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.user.dto.NewUserDto;
@@ -30,12 +31,14 @@ public class AdminUserController {
         return userService.getUsers(ids, from, size);
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     public UserDto postUser(@RequestBody @Valid NewUserDto newUserDto) {
         log.info("В метод postUser переданы данные: newUserDto = {}", newUserDto);
         return userService.saveUser(newUserDto);
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{userId}")
     public void deleteUser(@PathVariable long userId) {
         log.info("В метод deleteUser переданы данные: userId = {}", userId);

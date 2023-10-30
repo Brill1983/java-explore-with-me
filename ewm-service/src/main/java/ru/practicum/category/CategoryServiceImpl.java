@@ -30,7 +30,6 @@ public class CategoryServiceImpl implements CategoryService {
     public void deleteCategory(long categoryId) {
         categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ElementNotFoundException("Категория с ID: " + categoryId + " не найдена"));
-        //TODO проверка на связи - нужна ли или можно на уровне ДБ выбросить исключение?
         categoryRepository.deleteById(categoryId);
     }
 

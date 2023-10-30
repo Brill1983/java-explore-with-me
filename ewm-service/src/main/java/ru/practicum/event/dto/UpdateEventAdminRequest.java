@@ -1,6 +1,7 @@
 package ru.practicum.event.dto;
 
 import lombok.*;
+import ru.practicum.utils.AdminEventDateConstrain;
 import ru.practicum.utils.AdminStateActionConstrain;
 
 import javax.validation.constraints.Pattern;
@@ -17,6 +18,7 @@ public class UpdateEventAdminRequest extends UpdateEvent {
 
     @Pattern(regexp = DATE_TIME_PATTERN,
             message = "Формат даты и времени должен соответствовать виду: 'yyyy-MM-dd HH:mm:ss'")
+    @AdminEventDateConstrain
     private String eventDate;
 
     @AdminStateActionConstrain

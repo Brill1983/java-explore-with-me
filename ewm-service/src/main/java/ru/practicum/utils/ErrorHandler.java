@@ -1,6 +1,7 @@
 package ru.practicum.utils;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -70,7 +71,6 @@ public class ErrorHandler {
         return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
     }
 
-
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public AppiError handleMissingArgumentExc(MissingServletRequestParameterException e) {
@@ -102,9 +102,9 @@ public class ErrorHandler {
         return new AppiError(errors, e.getMessage(), reason, HttpStatus.NOT_FOUND.name(), LocalDateTime.now().format(DATE_FORMAT));
     }
 
-    @ExceptionHandler
+    @ExceptionHandler({DataIntegrityViolationException.class, ConflictException.class})
     @ResponseStatus(HttpStatus.CONFLICT)
-    public AppiError handleConflictExistExc(ConflictException e) {
+    public AppiError handleConflictExistExc(RuntimeException e) {
 
         String errors = getErrors(e);
         String status = HttpStatus.CONFLICT.name();

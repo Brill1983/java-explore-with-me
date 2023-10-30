@@ -10,7 +10,6 @@ import ru.practicum.location.model.Location;
 import ru.practicum.user.UserMapper;
 import ru.practicum.user.model.User;
 
-import javax.persistence.*;
 import java.time.LocalDateTime;
 
 import static ru.practicum.utils.Constants.DATE_FORMAT;
@@ -28,9 +27,9 @@ public class EventMapper {
                 .description(newEventDto.getDescription())
                 .eventDate(newEventDto.getEventDate() != null ?
                         LocalDateTime.parse(newEventDto.getEventDate(), DATE_FORMAT) : null)
-                .paid(newEventDto.isPaid())
+                .paid(newEventDto.getPaid() != null ? newEventDto.getPaid() : false)
                 .participantLimit(newEventDto.getParticipantLimit())
-                .requestModeration(newEventDto.isRequestModeration())
+                .requestModeration(newEventDto.getRequestModeration() != null ? newEventDto.getRequestModeration() : true)
                 .title(newEventDto.getTitle())
                 .state(State.PENDING)
                 .createdOn(LocalDateTime.now())

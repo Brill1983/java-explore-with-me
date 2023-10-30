@@ -3,6 +3,7 @@ package ru.practicum.compilation;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.compilation.dto.CompilationDto;
@@ -20,6 +21,7 @@ public class AdminCompilationController {
 
     private final CompilationService compilationService;
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     public CompilationDto postCompilationAdmin(@RequestBody @Valid NewCompilationDto compilationDto) {
         log.info("В метод postCompilationAdmin переданы данные: newUserDto = {}", compilationDto);

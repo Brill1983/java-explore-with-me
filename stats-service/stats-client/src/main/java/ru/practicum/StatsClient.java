@@ -11,7 +11,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -41,6 +45,8 @@ public class StatsClient {
 
         URI uriString = uriComponentsBuilder.build().toUri();
 
-        return restTemplate.getForObject(uriString, List.class);
+        VeiwStatsDto[] response = restTemplate.getForObject(uriString, VeiwStatsDto[].class);
+
+        return response != null ? List.of(response) : Collections.emptyList();
     }
 }

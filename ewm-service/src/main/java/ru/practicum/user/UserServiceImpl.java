@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import ru.practicum.exceptions.ConflictException;
 import ru.practicum.exceptions.ElementNotFoundException;
 import ru.practicum.user.dto.NewUserDto;
 import ru.practicum.user.dto.UserDto;
@@ -40,6 +41,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto saveUser(NewUserDto newUserDto) {
         User user = userRepository.save(UserMapper.toUser(newUserDto));
+        userRepository.findByName(newUserDto.getEmail())
+                .ifPresent(cat -> {
+                    throw new ConflictException("Пользователь с email " + newUserDto.getEmail() + "уже существует");
+                });
         return UserMapper.toUserDto(user);
     }
 

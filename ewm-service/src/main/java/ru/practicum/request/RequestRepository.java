@@ -16,9 +16,8 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
 
     Integer countAllByStatusAndEvent_Id(Status status, long eventId);
 
-    @Query("select r from Request as r where r.status = ?1 and r.event.id in ?2")
-    List<Request> findAllByStatusAndEventIdIn(Status status, List<Long> eventsIds);
-
+//    @Query("select r from Request as r where r.status = ?1 and r.event.id in ?2")
+    List<Request> findAllByStatusAndEvent_IdIn(Status status, List<Long> eventsIds);
 
     List<Request> findAllByEvent_Id(long eventId);
 
@@ -27,4 +26,6 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     void requestStatusUpdate(Status status, List<Long> id);
 
     List<Request> findAllByIdIn(List<Long> requestIds);
+
+    List<Request> findAllByEvent_IdAndStatus(Long eventId, Status status);
 }
