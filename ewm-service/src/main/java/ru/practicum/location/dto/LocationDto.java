@@ -6,7 +6,6 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

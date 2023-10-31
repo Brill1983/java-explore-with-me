@@ -2,6 +2,7 @@ package ru.practicum.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.EndpointHitDto;
@@ -9,6 +10,7 @@ import ru.practicum.VeiwStatsDto;
 import ru.practicum.exceptions.BadParameterException;
 import ru.practicum.service.StatsService;
 
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +25,7 @@ public class StatsController {
 
     private final StatsService statsService;
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/hit")
     public EndpointHitDto saveStatHit(@RequestBody EndpointHitDto endpointHit) {
         log.info("В метод saveStatHit передан объект с полями: app {}, uri {}, ip {}, timestamp {}",
@@ -31,8 +34,8 @@ public class StatsController {
     }
 
     @GetMapping("/stats")
-    public List<VeiwStatsDto> getVeiwStats(@RequestParam String start,
-                                           @RequestParam String end,
+    public List<VeiwStatsDto> getVeiwStats(@RequestParam @NotBlank String start,
+                                           @RequestParam @NotBlank String end,
                                            @RequestParam(required = false) Set<String> uris,
                                            @RequestParam(defaultValue = "false") boolean unique) {
         log.info("В метод getVeiwStats переданы параметры запроса: start {}, end {}, uri {}, unique {}",

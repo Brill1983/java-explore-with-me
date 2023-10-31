@@ -266,23 +266,22 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> mapEventsToShortDtos(List<Event> events) {
 
-        List<Long> eventsIds = events.stream() // Формируем список с ID мероприятий для передачи в запрос requestRepository на получение списка запрсоов
+        List<Long> eventsIds = events.stream()
                 .map(Event::getId)
                 .collect(Collectors.toList());
 
         Optional<LocalDateTime> start = eventRepository.getMinPublishedDate(eventsIds);
 
-        List<EventShortDto> eventShortDtoList = new ArrayList<>(); // Объявляем список EventShortDto для возврата из метода
-        if (start.isPresent()) { // если у событий из списка есть хотя бы одна дата публикации, то:
-            // запрашиваем сервер статистики через getStats на получение списка ДТО уникальных просмотров
+        List<EventShortDto> eventShortDtoList = new ArrayList<>();
+        if (start.isPresent()) {
             Map<Long, Long> veiws = getStatsForEvents(start.get(), eventsIds);
             Map<Long, Integer> eventsRequests = getEventRequests(Status.CONFIRMED, eventsIds);
-            for (Event event : events) { // мапим список Событий на ДТО, заполняем поле запросов и просмотров, если просмотров не было - то 0
+            for (Event event : events) {
                 eventShortDtoList.add(
                         EventMapper.toShortDto(event, eventsRequests.getOrDefault(event.getId(), 0), veiws.getOrDefault(event.getId(), 0L))
                 );
             }
-        } else { // если у событий из списка вообще не было публикаций - то просмотры везде 0 и запросы везде 0
+        } else {
             for (Event event : events) {
                 eventShortDtoList.add(EventMapper.toShortDto(event, 0, 0L));
             }
@@ -293,23 +292,22 @@ public class EventServiceImpl implements EventService {
 
     private List<EventFullDto> mapEventsToFullDtos(List<Event> events) {
 
-        List<Long> eventsIds = events.stream() // Формируем список с ID мероприятий для передачи в запрос requestRepository на получение списка запрсоов
+        List<Long> eventsIds = events.stream()
                 .map(Event::getId)
                 .collect(Collectors.toList());
 
         Optional<LocalDateTime> start = eventRepository.getMinPublishedDate(eventsIds);
 
-        List<EventFullDto> eventShortDtoList = new ArrayList<>(); // Объявляем список EventShortDto для возврата из метода
-        if (start.isPresent()) { // если у событий из списка есть хотя бы одна дата публикации, то:
-            // запрашиваем сервер статистики через getStats на получение списка ДТО уникальных просмотров
+        List<EventFullDto> eventShortDtoList = new ArrayList<>();
+        if (start.isPresent()) {
             Map<Long, Long> veiws = getStatsForEvents(start.get(), eventsIds);
             Map<Long, Integer> eventsRequests = getEventRequests(Status.CONFIRMED, eventsIds);
-            for (Event event : events) { // мапим список Событий на ДТО, заполняем поле запросов и просмотров, если просмотров не было - то 0
+            for (Event event : events) {
                 eventShortDtoList.add(
                         EventMapper.toFullDto(event, eventsRequests.getOrDefault(event.getId(), 0), veiws.getOrDefault(event.getId(), 0L))
                 );
             }
-        } else { // если у событий из списка вообще не было публикаций - то просмотры везде 0 и запросы везде 0
+        } else {
             for (Event event : events) {
                 eventShortDtoList.add(EventMapper.toFullDto(event, 0, 0L));
             }
@@ -320,18 +318,18 @@ public class EventServiceImpl implements EventService {
 
     private Map<Long, Long> getStatsForEvents(LocalDateTime start, List<Long> eventsIds) {
 
-        List<String> uries = eventsIds.stream() // Формируем список URL для передачи в запрос getStats сервера статистики
+        List<String> uries = eventsIds.stream()
                 .map(id -> "/events/" + id)
                 .collect(Collectors.toList());
 
         List<VeiwStatsDto> veiwStatsDtoList = statsClient.getStats(start, LocalDateTime.now(), uries, true);
 
-        Map<Long, Long> veiws = new HashMap<>(); // Объявляем Мапу <eventId, кол-во_просмотров>
+        Map<Long, Long> veiws = new HashMap<>();
 
-        for (VeiwStatsDto veiwStatsDto : veiwStatsDtoList) { // проходим по списку ДТО просмотров
-            String uri = veiwStatsDto.getUri(); // получаем строку URI из ДТО просмотра
-            Long eventId = Long.parseLong(uri.substring(uri.lastIndexOf("/") + 1)); // отрезаем от строки номер события и преобразуем а Long
-            veiws.put(eventId, veiwStatsDto.getHits()); // заполняем мапу
+        for (VeiwStatsDto veiwStatsDto : veiwStatsDtoList) {
+            String uri = veiwStatsDto.getUri();
+            Long eventId = Long.parseLong(uri.substring(uri.lastIndexOf("/") + 1));
+            veiws.put(eventId, veiwStatsDto.getHits());
         }
         return veiws;
     }

@@ -1,6 +1,5 @@
 package ru.practicum;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -11,20 +10,19 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Component
-@RequiredArgsConstructor
 public class StatsClient {
 
+    private final String serverUrl;
     private final RestTemplate restTemplate = new RestTemplate();
 
-//    @Value("${stats-server.url}")
-    private final String serverUrl = "http://localhost:9090";
+    public StatsClient(@Value("${stats-server.url}") String serverUrl) {
+        this.serverUrl = serverUrl;
+    }
+
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public EndpointHitDto postHit(EndpointHitDto hit) {

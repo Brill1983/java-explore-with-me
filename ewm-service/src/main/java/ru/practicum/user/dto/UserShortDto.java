@@ -11,6 +11,5 @@ import lombok.Setter;
 @Setter
 public class UserShortDto {
     private Long id;
-
     private String name;
 }

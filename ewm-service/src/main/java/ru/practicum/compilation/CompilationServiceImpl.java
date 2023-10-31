@@ -59,8 +59,6 @@ public class CompilationServiceImpl implements CompilationService {
         Compilation compilation = compilationRepository.findById(compId)
                 .orElseThrow(() -> new ElementNotFoundException("Подборки с ID: " + compId + " не найдено"));
 
-        Compilation newComp = CompilationMapper.toCompFromUpdateDto(compilationDto, compilation);
-
         List<Event> eventList;
         List<EventShortDto> eventShortDtoList;
 
