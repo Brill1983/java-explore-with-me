@@ -72,4 +72,4 @@ create table if not exists events_compilations
     compilation_id bigint not null
         constraint events_compilations_compilations_id_fk
             references compilations on delete cascade
-)
+);

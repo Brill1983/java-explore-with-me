@@ -2,6 +2,7 @@ package ru.practicum.event;
 
 import com.querydsl.core.BooleanBuilder;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,7 @@ import ru.practicum.category.model.Category;
 import ru.practicum.event.dto.*;
 import ru.practicum.event.model.Event;
 import ru.practicum.event.model.QEvent;
+import ru.practicum.exceptions.BadParameterException;
 import ru.practicum.exceptions.ConflictException;
 import ru.practicum.exceptions.ElementNotFoundException;
 import ru.practicum.location.LocationMapper;
@@ -141,7 +143,14 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventFullDto> getAdminFullEvent(List<Long> users, List<String> states, List<Long> categories,
-                                                LocalDateTime start, LocalDateTime end, int from, int size) {
+                                                String rangeStart, String rangeEnd, int from, int size) {
+
+        LocalDateTime start = !StringUtils.isEmpty(rangeStart) ? LocalDateTime.parse(rangeStart, DATE_FORMAT) : null;
+        LocalDateTime end = !StringUtils.isEmpty(rangeEnd) ? LocalDateTime.parse(rangeEnd, DATE_FORMAT) : null;
+
+        if ((end != null && start != null) && end.isBefore(start)) {
+            throw new BadParameterException("Начало не может быть позже окончания периода");
+        }
 
         Pageable page = PageRequest.of(from / size, size);
 
@@ -202,9 +211,16 @@ public class EventServiceImpl implements EventService {
 
     //________________________________ Public Part_____________________________________________________________________
     @Override
-    public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid, LocalDateTime start,
-                                               LocalDateTime end, boolean onlyAvailable, String sort, int from,
+    public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid, String rangeStart,
+                                               String rangeEnd, boolean onlyAvailable, String sort, int from,
                                                int size, HttpServletRequest request) {
+
+        LocalDateTime start = !StringUtils.isEmpty(rangeStart) ? LocalDateTime.parse(rangeStart, DATE_FORMAT) : null;
+        LocalDateTime end = !StringUtils.isEmpty(rangeEnd) ? LocalDateTime.parse(rangeEnd, DATE_FORMAT) : null;
+
+        if ((end != null && start != null) && end.isBefore(start)) {
+            throw new BadParameterException("Начало не может быть позже окончания периода");
+        }
 
         Pageable page = PageRequest.of(from / size, size);
 
