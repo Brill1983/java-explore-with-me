@@ -24,7 +24,7 @@ public class EndpointHitMapper {
 
     public EndpointHit toModel(EndpointHitDto hitDto) {
         return new EndpointHit(
-                hitDto.getId(),
+                0L,
                 hitDto.getApp(),
                 hitDto.getUri(),
                 hitDto.getIp(),

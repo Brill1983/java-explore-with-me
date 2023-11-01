@@ -1,25 +1,28 @@
 package ru.practicum;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
-@Service
-@RequiredArgsConstructor
+@Component
 public class StatsClient {
 
-    private final RestTemplate restTemplate;
-
-    @Value("${stats-server.url}")
     private final String serverUrl;
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    public StatsClient(@Value("${stats-server.url}") String serverUrl) {
+        this.serverUrl = serverUrl;
+    }
+
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public EndpointHitDto postHit(EndpointHitDto hit) {
@@ -31,15 +34,17 @@ public class StatsClient {
         String startDayTime = start.format(formatter);
         String endDayTime = end.format(formatter);
 
-        String uris = String.join(",", urisList);
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(serverUrl)
+                .path("/stats")
+                .queryParam("start", startDayTime)
+                .queryParam("end", endDayTime)
+                .queryParam("uris", urisList)
+                .queryParam("unique", unique);
 
-        Map<String, Object> parameters = Map.of(
-                "start", startDayTime,
-                "end", endDayTime,
-                "uris", uris,
-                "unique", unique != null ? unique : false
-        );
+        URI uriString = uriComponentsBuilder.build().toUri();
 
-        return restTemplate.getForObject(serverUrl + "/stats?start={start}&end={end}&uris={uris}&unique={unique}", List.class, parameters);
+        VeiwStatsDto[] response = restTemplate.getForObject(uriString, VeiwStatsDto[].class);
+
+        return response != null ? List.of(response) : Collections.emptyList();
     }
 }

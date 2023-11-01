@@ -8,7 +8,7 @@ import lombok.*;
 @Setter
 public class EndpointHitDto {
 
-    private long id;
+    private Long id;
 
     private String app;
 
