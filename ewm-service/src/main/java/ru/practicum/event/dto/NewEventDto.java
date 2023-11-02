@@ -21,7 +21,7 @@ public class NewEventDto {
     private String annotation;
 
     @NotNull
-    @Positive
+    @Positive(message = "Id category не может быть отрицательным или ноль")
     private Long category;
 
     @NotBlank(message = "Полное описание события обязательно для заполнения")
@@ -40,7 +40,7 @@ public class NewEventDto {
 
     private Boolean paid;
 
-    @PositiveOrZero
+    @PositiveOrZero(message = "participantLimit не может быть отрицательным")
     private int participantLimit;
 
     private Boolean requestModeration;

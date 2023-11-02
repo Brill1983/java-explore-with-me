@@ -2,7 +2,6 @@ package ru.practicum.event;
 
 import com.querydsl.core.BooleanBuilder;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,10 +13,10 @@ import ru.practicum.StatsClient;
 import ru.practicum.VeiwStatsDto;
 import ru.practicum.category.CategoryRepository;
 import ru.practicum.category.model.Category;
+import ru.practicum.comment.CommentRepository;
 import ru.practicum.event.dto.*;
 import ru.practicum.event.model.Event;
 import ru.practicum.event.model.QEvent;
-import ru.practicum.exceptions.BadParameterException;
 import ru.practicum.exceptions.ConflictException;
 import ru.practicum.exceptions.ElementNotFoundException;
 import ru.practicum.location.LocationMapper;
@@ -52,6 +51,7 @@ public class EventServiceImpl implements EventService {
     private final StatsClient statsClient;
     private final RequestRepository requestRepository;
     private final LocationRepository locationRepository;
+    private final CommentRepository commentRepository;
 
     //________________________________Private Part_____________________________________________________________________
 
@@ -142,26 +142,21 @@ public class EventServiceImpl implements EventService {
     //________________________________ Admin Part_____________________________________________________________________
 
     @Override
-    public List<EventFullDto> getAdminFullEvent(List<Long> users, List<String> states, List<Long> categories,
-                                                String rangeStart, String rangeEnd, int from, int size) {
+    public List<EventFullDto> getAdminFullEvent(AdminGetEventParams params) {
 
-        LocalDateTime start = !StringUtils.isEmpty(rangeStart) ? LocalDateTime.parse(rangeStart, DATE_FORMAT) : null;
-        LocalDateTime end = !StringUtils.isEmpty(rangeEnd) ? LocalDateTime.parse(rangeEnd, DATE_FORMAT) : null;
+        LocalDateTime start = params.getStartDateTime();
+        LocalDateTime end = params.getEndDateTime();
 
-        if ((end != null && start != null) && end.isBefore(start)) {
-            throw new BadParameterException("Начало не может быть позже окончания периода");
-        }
-
-        Pageable page = PageRequest.of(from / size, size);
+        Pageable page = PageRequest.of(params.getFrom() / params.getSize(), params.getSize());
 
         BooleanBuilder query = new BooleanBuilder()
-                .and(!CollectionUtils.isEmpty(users) ? QEvent.event.initiator.id.in(users) : null)
-                .and(!CollectionUtils.isEmpty(categories) ? QEvent.event.category.id.in(categories) : null)
+                .and(!CollectionUtils.isEmpty(params.getUsers()) ? QEvent.event.initiator.id.in(params.getUsers()) : null)
+                .and(!CollectionUtils.isEmpty(params.getCategories()) ? QEvent.event.category.id.in(params.getCategories()) : null)
                 .and(start != null ? QEvent.event.eventDate.goe(start) : null)
                 .and(end != null ? QEvent.event.eventDate.loe(end) : null);
 
-        if (!CollectionUtils.isEmpty(states)) {
-            List<State> stateList = states.stream()
+        if (!CollectionUtils.isEmpty(params.getStates())) {
+            List<State> stateList = params.getStates().stream()
                     .map(State::valueOf)
                     .collect(Collectors.toList());
             query.and(QEvent.event.state.in(stateList));
@@ -210,31 +205,26 @@ public class EventServiceImpl implements EventService {
     }
 
     //________________________________ Public Part_____________________________________________________________________
+
     @Override
-    public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid, String rangeStart,
-                                               String rangeEnd, boolean onlyAvailable, String sort, int from,
-                                               int size, HttpServletRequest request) {
+    public List<EventShortDto> getPublicEvents(PublicGetEventParams params, HttpServletRequest request) {
 
-        LocalDateTime start = !StringUtils.isEmpty(rangeStart) ? LocalDateTime.parse(rangeStart, DATE_FORMAT) : null;
-        LocalDateTime end = !StringUtils.isEmpty(rangeEnd) ? LocalDateTime.parse(rangeEnd, DATE_FORMAT) : null;
+        LocalDateTime start = params.getStartDateTime();
+        LocalDateTime end = params.getEndDateTime();
 
-        if ((end != null && start != null) && end.isBefore(start)) {
-            throw new BadParameterException("Начало не может быть позже окончания периода");
-        }
-
-        Pageable page = PageRequest.of(from / size, size);
+        Pageable page = PageRequest.of(params.getFrom() / params.getSize(), params.getSize());
 
         BooleanBuilder query = new BooleanBuilder()
-                .and(text != null ? QEvent.event.annotation.containsIgnoreCase(text) : null)
-                .or(text != null ? QEvent.event.description.containsIgnoreCase(text) : null)
+                .and(params.getText() != null ? QEvent.event.annotation.containsIgnoreCase(params.getText()) : null)
+                .or(params.getText() != null ? QEvent.event.description.containsIgnoreCase(params.getText()) : null)
                 .and(QEvent.event.state.eq(State.PUBLISHED))
-                .and(!CollectionUtils.isEmpty(categories) ? QEvent.event.category.id.in(categories) : null)
-                .and(paid != null ? QEvent.event.paid.eq(paid) : null)
+                .and(!CollectionUtils.isEmpty(params.getCategories()) ? QEvent.event.category.id.in(params.getCategories()) : null)
+                .and(params.getPaid() != null ? QEvent.event.paid.eq(params.getPaid()) : null)
                 .and((end == null && start == null) ?
                         QEvent.event.eventDate.after(LocalDateTime.now()) :
                         QEvent.event.eventDate.between(start, end));
 
-        if (onlyAvailable) {
+        if (params.isOnlyAvailable()) {
             query.and(QEvent.event.participantLimit.goe(0));
         }
 
@@ -242,7 +232,7 @@ public class EventServiceImpl implements EventService {
 
         List<EventShortDto> shortDtoList = mapEventsToShortDtos(events.toList());
 
-        if (Sort.valueOf(sort).equals(Sort.EVENT_DATE)) {
+        if (Sort.valueOf(params.getSort()).equals(Sort.EVENT_DATE)) {
             shortDtoList.stream()
                     .sorted(Comparator.comparing(EventShortDto::getEventDate))
                     .collect(Collectors.toList());
@@ -287,6 +277,7 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.toList());
 
         Optional<LocalDateTime> start = eventRepository.getMinPublishedDate(eventsIds);
+        Map<Long, Long> commentsQuantity = commentRepository.countCommentsForEventIdIn(eventsIds);
 
         List<EventShortDto> eventShortDtoList = new ArrayList<>();
         if (start.isPresent()) {
@@ -294,12 +285,15 @@ public class EventServiceImpl implements EventService {
             Map<Long, Integer> eventsRequests = getEventRequests(Status.CONFIRMED, eventsIds);
             for (Event event : events) {
                 eventShortDtoList.add(
-                        EventMapper.toShortDto(event, eventsRequests.getOrDefault(event.getId(), 0), veiws.getOrDefault(event.getId(), 0L))
+                        EventMapper.toShortDto(event,
+                                eventsRequests.getOrDefault(event.getId(), 0),
+                                veiws.getOrDefault(event.getId(), 0L),
+                                commentsQuantity.getOrDefault(event.getId(), 0L))
                 );
             }
         } else {
             for (Event event : events) {
-                eventShortDtoList.add(EventMapper.toShortDto(event, 0, 0L));
+                eventShortDtoList.add(EventMapper.toShortDto(event, 0, 0L, 0L));
             }
         }
 

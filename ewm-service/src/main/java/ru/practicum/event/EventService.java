@@ -24,14 +24,11 @@ public interface EventService {
     EventRequestStatusUpdateResult patchRequestsForOwnersEvent(long userId, long eventId,
                                                                EventRequestStatusUpdateRequest updateRequest);
 
-    List<EventFullDto> getAdminFullEvent(List<Long> users, List<String> states, List<Long> categories,
-                                         String rangeStart, String rangeEnd, int from, int size);
+    List<EventFullDto> getAdminFullEvent(AdminGetEventParams params);
 
     EventFullDto patchAdminEvent(long eventId, UpdateEventAdminRequest eventDto);
 
-    List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid, String start,
-                                        String end, boolean onlyAvailable, String sort, int from, int size,
-                                        HttpServletRequest request);
+    List<EventShortDto> getPublicEvents(PublicGetEventParams params, HttpServletRequest request);
 
     EventFullDto getPublicEventById(long eventId, HttpServletRequest request);
 

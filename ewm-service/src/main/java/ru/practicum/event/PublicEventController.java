@@ -3,12 +3,17 @@ package ru.practicum.event;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
-import ru.practicum.utils.validations.SortConstrain;
+import ru.practicum.event.dto.PublicGetEventParams;
+import ru.practicum.utils.validations.StartBeforeEndConstrain;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.List;
 
 @Slf4j
@@ -21,21 +26,10 @@ public class PublicEventController {
     private final EventService eventService;
 
     @GetMapping
-    public List<EventShortDto> getPublicEvents(@RequestParam(required = false) String text,
-                                               @RequestParam(required = false) List<Long> categories,
-                                               @RequestParam(required = false) Boolean paid,
-                                               @RequestParam(required = false) String rangeStart,
-                                               @RequestParam(required = false) String rangeEnd,
-                                               @RequestParam(defaultValue = "false") boolean onlyAvailable,
-                                               @RequestParam(defaultValue = "EVENT_DATE") @SortConstrain String sort,
-                                               @RequestParam(defaultValue = "0") int from,
-                                               @RequestParam(defaultValue = "10") int size,
+    public List<EventShortDto> getPublicEvents(@Valid @StartBeforeEndConstrain PublicGetEventParams params,
                                                HttpServletRequest request) {
-        log.info("В метод getPublicEvents переданы данные: text = {}, categories = {}, paid = {}, rangeStart = {}, " +
-                        "rangeEnd = {}, onlyAvailable = {}, sort = {}, from = {}, size = {}",
-                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
-        return eventService.getPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort,
-                from, size, request);
+        log.info("В метод getPublicEvents переданы данные: params = {}", params);
+        return eventService.getPublicEvents(params, request);
     }
 
     @GetMapping("/{id}")

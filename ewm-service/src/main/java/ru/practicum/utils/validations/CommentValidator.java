@@ -5,7 +5,7 @@ import ru.practicum.event.Sort;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-public class SortValidator implements ConstraintValidator<SortConstrain, String> {
+public class CommentValidator implements ConstraintValidator<CommentSortConstrain, String> {
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
