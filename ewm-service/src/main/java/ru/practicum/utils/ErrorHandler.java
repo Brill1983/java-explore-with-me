@@ -87,17 +87,6 @@ public class ErrorHandler {
         return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
     }
 
-//    @ExceptionHandler
-//    @ResponseStatus(HttpStatus.BAD_REQUEST)
-//    public AppiError handleBadParameterExc(BadParameterException e) {
-//
-//        String errors = getErrors(e);
-//        String status = HttpStatus.BAD_REQUEST.name();
-//        String reason = "Передан неправильный параметр запроса";
-//        log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
-//        return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
-//    }
-
     private String getErrors(Throwable e) {
         StringWriter errors = new StringWriter();
         e.printStackTrace(new PrintWriter(errors));

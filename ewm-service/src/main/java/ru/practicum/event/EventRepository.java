@@ -15,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long>, QuerydslPredicateExecutor<Event> {
 
-    Page<Event> findAllByInitiator_Id(Long userId, Pageable page);
+    Page<Event> findAllByInitiatorId(Long userId, Pageable page);
 
     @Query("select min(e.publishedOn) from Event as e where e.id in ?1")
     Optional<LocalDateTime> getMinPublishedDate(List<Long> eventsId);

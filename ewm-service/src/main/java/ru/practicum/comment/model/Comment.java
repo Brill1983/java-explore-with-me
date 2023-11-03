@@ -1,9 +1,6 @@
 package ru.practicum.comment.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import ru.practicum.event.model.Event;
 import ru.practicum.user.model.User;
 
@@ -16,6 +13,7 @@ import java.time.LocalDateTime;
 @Table(name = "comments")
 @Getter
 @Setter
+@Builder
 public class Comment {
 
     @Id

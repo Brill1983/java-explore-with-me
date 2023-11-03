@@ -13,14 +13,13 @@ public interface CommentService {
 
     List<CommentShortDto> getOwnerCommentsForEvent(long userId, long eventId);
 
-
     CommentFullDto getCommentById(long commentId);
 
     List<CommentShortDto> getUserComments(long userId, Integer from, Integer size, String sort);
 
     List<CommentFullDto> getCommentsByEventId(long eventId, Integer from, Integer size, String sort);
 
-    void deleteCommentByOwner(long userId, long commentId);
+    void deleteOwnersCommentById(long userId, long commentId);
 
-    void deleteCommentByAdmin(long commentId);
+    void deleteCommentById(long commentId);
 }

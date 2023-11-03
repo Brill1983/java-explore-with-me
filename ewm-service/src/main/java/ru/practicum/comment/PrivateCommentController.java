@@ -47,9 +47,9 @@ public class PrivateCommentController {
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{commentId}")
-    public void deleteCommentByOwner(@PathVariable long userId,
-                                     @PathVariable long commentId) {
-        log.info("В метод deleteCommentByOwner переданы данные: userId = {}, commentId = {}", userId, commentId);
-        commentService.deleteCommentByOwner(userId, commentId);
+    public void deleteOwnersCommentById(@PathVariable long userId,
+                                        @PathVariable long commentId) {
+        log.info("В метод deleteOwnersCommentById переданы данные: userId = {}, commentId = {}", userId, commentId);
+        commentService.deleteOwnersCommentById(userId, commentId);
     }
 }

@@ -1,5 +1,6 @@
 package ru.practicum.comment;
 
+import lombok.experimental.UtilityClass;
 import ru.practicum.comment.dto.CommentDto;
 import ru.practicum.comment.dto.CommentFullDto;
 import ru.practicum.comment.dto.CommentShortDto;
@@ -11,34 +12,34 @@ import ru.practicum.user.model.User;
 
 import java.time.LocalDateTime;
 
+@UtilityClass
 public class CommentMapper {
 
-    public static CommentShortDto toShortDto(Comment comment, EventShortDto eventDto) {
-        return new CommentShortDto(
-                comment.getId(),
-                comment.getText(),
-                eventDto,
-                comment.getCreatedOn()
-        );
+    public CommentShortDto toShortDto(Comment comment, EventShortDto eventDto) {
+        return CommentShortDto.builder()
+                .id(comment.getId())
+                .text(comment.getText())
+                .event(eventDto)
+                .createdOn(comment.getCreatedOn())
+                .build();
     }
 
-    public static Comment toComment(CommentDto commentDto, User user, Event event) {
-        return new Comment(
-                null,
-                commentDto.getText(),
-                user,
-                event,
-                LocalDateTime.now()
-        );
+    public Comment toComment(CommentDto commentDto, User user, Event event) {
+        return Comment.builder()
+                .text(commentDto.getText())
+                .author(user)
+                .event(event)
+                .createdOn(LocalDateTime.now())
+                .build();
     }
 
-    public static CommentFullDto toFullDto(Comment comment, UserShortDto user, EventShortDto eventDto) {
-        return new CommentFullDto(
-                comment.getId(),
-                comment.getText(),
-                user,
-                eventDto,
-                comment.getCreatedOn()
-        );
+    public CommentFullDto toFullDto(Comment comment, UserShortDto userDto, EventShortDto eventDto) {
+        return CommentFullDto.builder()
+                .id(comment.getId())
+                .text(comment.getText())
+                .author(userDto)
+                .event(eventDto)
+                .createdOn(comment.getCreatedOn())
+                .build();
     }
 }

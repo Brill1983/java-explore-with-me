@@ -11,11 +11,11 @@ import java.util.Map;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    List<Comment> findByAuthor_IdAndEvent_Id(long userId, long eventId);
+    List<Comment> findByAuthorIdAndEventId(long userId, long eventId);
 
-    Page<Comment> findAllByAuthor_Id(long userId, Pageable page);
+    Page<Comment> findAllByAuthorId(long userId, Pageable page);
 
-    Page<Comment> findAllByEvent_Id(long eventId, Pageable page);
+    Page<Comment> findAllByEventId(long eventId, Pageable page);
 
     @Query("select c.event.id as eventId, count(c.id) as commentsQuantity from Comment c where c.event.id in ?1 group by c.event.id")
     List<Map<String, Long>> countCommentsForEventIdIn(List<Long> eventsIds);

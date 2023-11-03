@@ -28,8 +28,9 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void deleteCategory(long categoryId) {
-        categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ElementNotFoundException("Категория с ID: " + categoryId + " не найдена"));
+        if (!categoryRepository.existsById(categoryId)) {
+            throw new ElementNotFoundException("Категория с ID: " + categoryId + " не найдена");
+        }
         categoryRepository.deleteById(categoryId);
     }
 

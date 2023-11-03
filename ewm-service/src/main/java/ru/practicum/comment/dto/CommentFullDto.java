@@ -1,9 +1,6 @@
 package ru.practicum.comment.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.user.dto.UserShortDto;
 
@@ -13,6 +10,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Getter
 @Setter
+@Builder
 public class CommentFullDto {
 
     private Long id;

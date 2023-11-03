@@ -50,19 +50,15 @@ public class CommentServiceImpl implements CommentService {
     private final EventRepository eventRepository;
     private final EventService eventService;
 
-
-    // _______________________________ Private _________________________________________________________________________
     @Transactional
     @Override
     public CommentShortDto postComment(long userId, long eventId, CommentDto commentDto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ElementNotFoundException("Пользователь с ID: " + userId + " не найден"));
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ElementNotFoundException("События с ID: " + eventId + " не найдено"));
+        Event event = getEventFromDb(eventId);
         if (event.getPublishedOn() == null) {
             throw new ConflictException("Мероприятие с ID: " + eventId + ", не опуликовано");
         }
-
         Comment comment = commentRepository.save(CommentMapper.toComment(commentDto, user, event));
 
         return mapShortCommentDto(comment, event);
@@ -71,16 +67,13 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     @Override
     public CommentShortDto patchComment(long userId, long commentId, CommentDto commentDto) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new ElementNotFoundException("Пользователь с ID: " + userId + " не найден"));
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new ElementNotFoundException("Комментарий с ID: " + commentId + " не найден"));
+        checkUser(userId);
+        Comment comment = getCommentFromDb(commentId);
         if (comment.getAuthor().getId() != userId) {
             throw new ConflictException("Комментарий с ID " + commentId + " размещен не пользователем с ID " + userId +
                     ". Изменение чужого комментария запрещено");
         }
         comment.setText(commentDto.getText());
-
         Comment updatedComment = commentRepository.save(comment);
 
         return mapShortCommentDto(updatedComment, comment.getEvent());
@@ -88,11 +81,9 @@ public class CommentServiceImpl implements CommentService {
 
     @Transactional
     @Override
-    public void deleteCommentByOwner(long userId, long commentId) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new ElementNotFoundException("Пользователь с ID: " + userId + " не найден"));
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new ElementNotFoundException("Комментарий с ID: " + commentId + " не найден"));
+    public void deleteOwnersCommentById(long userId, long commentId) {
+        checkUser(userId);
+        Comment comment = getCommentFromDb(commentId);
         if (comment.getAuthor().getId() != userId) {
             throw new ConflictException("Комментарий с ID " + commentId + " размещен не пользователем с ID " + userId +
                     ". Удаление чужого комментария запрещено");
@@ -103,35 +94,26 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public List<CommentShortDto> getOwnerCommentsForEvent(long userId, long eventId) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new ElementNotFoundException("Пользователь с ID: " + userId + " не найден"));
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ElementNotFoundException("События с ID: " + eventId + " не найдено"));
-
+        checkUser(userId);
+        Event event = getEventFromDb(eventId);
         EventShortDto eventShortDto = eventService.mapEventsToShortDtos(List.of(event)).get(0);
-        return commentRepository.findByAuthor_IdAndEvent_Id(userId, eventId).stream()
+        return commentRepository.findByAuthorIdAndEventId(userId, eventId).stream()
                 .map(comment -> CommentMapper.toShortDto(comment, eventShortDto))
                 .collect(Collectors.toList());
     }
 
-    // _______________________________ Public _________________________________________________________________________
     @Override
     public CommentFullDto getCommentById(long commentId) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new ElementNotFoundException("Комментарий с ID: " + commentId + " не найден"));
-
+        Comment comment = getCommentFromDb(commentId);
         UserShortDto userDto = UserMapper.toUserShortDto(comment.getAuthor());
-
         EventShortDto eventShortDto = eventService.mapEventsToShortDtos(List.of(comment.getEvent())).get(0);
         return CommentMapper.toFullDto(comment, userDto, eventShortDto);
     }
 
     @Override
     public List<CommentShortDto> getUserComments(long userId, Integer from, Integer size, String sort) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new ElementNotFoundException("Пользователь с ID: " + userId + " не найден"));
-
-        List<Comment> commentList = commentRepository.findAllByAuthor_Id(userId, makePage(from, size, sort)).toList();
+        checkUser(userId);
+        List<Comment> commentList = commentRepository.findAllByAuthorId(userId, makePage(from, size, sort)).toList();
         List<Event> eventsList = commentList.stream()
                 .map(Comment::getEvent)
                 .collect(Collectors.toList());
@@ -151,13 +133,9 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public List<CommentFullDto> getCommentsByEventId(long eventId, Integer from, Integer size, String sort) {
-
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ElementNotFoundException("События с ID: " + eventId + " не найдено"));
-
+        Event event = getEventFromDb(eventId);
         EventShortDto eventShortDto = eventService.mapEventsToShortDtos(List.of(event)).get(0);
-
-        List<Comment> commentList = commentRepository.findAllByEvent_Id(eventId, makePage(from, size, sort)).toList();
+        List<Comment> commentList = commentRepository.findAllByEventId(eventId, makePage(from, size, sort)).toList();
 
         List<UserShortDto> users = commentList.stream()
                 .map(Comment::getAuthor)
@@ -176,27 +154,39 @@ public class CommentServiceImpl implements CommentService {
         return commentFullDtos;
     }
 
-    // _______________________________ Admin _________________________________________________________________________
     @Transactional
     @Override
-    public void deleteCommentByAdmin(long commentId) {
-        commentRepository.findById(commentId)
-                .orElseThrow(() -> new ElementNotFoundException("Комментарий с ID: " + commentId + " не найден"));
-
+    public void deleteCommentById(long commentId) {
+        if (!commentRepository.existsById(commentId)) {
+            throw new ElementNotFoundException("Комментарий с ID: " + commentId + " не найден");
+        }
         commentRepository.deleteById(commentId);
     }
 
-    // _______________________________ Utils _________________________________________________________________________
     private Pageable makePage(Integer from, Integer size, String sort) {
-        if (CommentSort.valueOf(sort.toUpperCase()).equals(CommentSort.DESC)) {
-            return PageRequest.of(from / size, size, Sort.by("createdOn").descending());
-        } else {
-            return PageRequest.of(from / size, size, Sort.by("createdOn").ascending());
-        }
+        return CommentSort.valueOf(sort.toUpperCase()).equals(CommentSort.DESC) ?
+                (PageRequest.of(from / size, size, Sort.by("createdOn").descending())) :
+                (PageRequest.of(from / size, size, Sort.by("createdOn").ascending()));
     }
 
     private CommentShortDto mapShortCommentDto(Comment comment, Event event) {
         EventShortDto eventShortDto = eventService.mapEventsToShortDtos(List.of(event)).get(0);
         return CommentMapper.toShortDto(comment, eventShortDto);
+    }
+
+    private void checkUser(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new ElementNotFoundException("Пользователь с ID: " + userId + " не найден");
+        }
+    }
+
+    private Event getEventFromDb(Long eventId) {
+        return eventRepository.findById(eventId)
+                .orElseThrow(() -> new ElementNotFoundException("События с ID: " + eventId + " не найдено"));
+    }
+
+    private Comment getCommentFromDb(Long commentId) {
+        return commentRepository.findById(commentId)
+                .orElseThrow(() -> new ElementNotFoundException("Комментарий с ID: " + commentId + " не найден"));
     }
 }

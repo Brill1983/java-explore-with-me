@@ -29,10 +29,9 @@ public class RequestServiceImpl implements RequestService {
     @Transactional(readOnly = true)
     @Override
     public List<ParticipationRequestDto> getUsersRequests(long userId) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new ElementNotFoundException("Пользователь с ID: " + userId + " не найден"));
+        checkUser(userId);
 
-        return requestRepository.findAllByRequester_Id(userId).stream()
+        return requestRepository.findAllByRequesterId(userId).stream()
                 .map(RequestMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -43,7 +42,7 @@ public class RequestServiceImpl implements RequestService {
                 .orElseThrow(() -> new ElementNotFoundException("Пользователь с ID: " + userId + " не найден"));
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ElementNotFoundException("Собятия с ID: " + eventId + " не найден"));
-        Optional<Request> optionalEvent = requestRepository.findByRequester_IdAndEvent_Id(userId, eventId);
+        Optional<Request> optionalEvent = requestRepository.findByRequesterIdAndEventId(userId, eventId);
         if (optionalEvent.isPresent()) {
             throw new ConflictException("Запрос от пользователя с ID: " + userId +
                     ", на мероприятие с ID: " + eventId + "уже зарегистрирован");
@@ -55,7 +54,7 @@ public class RequestServiceImpl implements RequestService {
         if (event.getPublishedOn() == null) {
             throw new ConflictException("Мероприятие с ID: " + eventId + ", не опуликовано");
         }
-        Integer participantsNumber = requestRepository.countAllByStatusAndEvent_Id(Status.CONFIRMED, eventId);
+        Integer participantsNumber = requestRepository.countAllByStatusAndEventId(Status.CONFIRMED, eventId);
 
         if (participantsNumber != null && participantsNumber >= event.getParticipantLimit() && event.getParticipantLimit() != 0) {
             throw new ConflictException("На мероприятие с ID: " + eventId + ", уже зарегистрировано максимальное кол-во участников");
@@ -72,8 +71,7 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public ParticipationRequestDto patchRequest(long userId, long requestId) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new ElementNotFoundException("Пользователь с ID: " + userId + " не найден"));
+        checkUser(userId);
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new ElementNotFoundException("Запроса с ID: " + requestId + " нет в базе"));
 
@@ -82,5 +80,11 @@ public class RequestServiceImpl implements RequestService {
         }
         request.setStatus(Status.CANCELED);
         return RequestMapper.toDto(requestRepository.save(request));
+    }
+
+    private void checkUser(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new ElementNotFoundException("Пользователь с ID: " + userId + " не найден");
+        }
     }
 }
