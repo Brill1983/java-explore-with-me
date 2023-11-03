@@ -232,7 +232,7 @@ public class EventServiceImpl implements EventService {
 
         List<EventShortDto> shortDtoList = mapEventsToShortDtos(events.toList());
 
-        if (Sort.valueOf(params.getSort()).equals(Sort.EVENT_DATE)) {
+        if (Sort.valueOf(params.getSort().toUpperCase()).equals(Sort.EVENT_DATE)) {
             shortDtoList.stream()
                     .sorted(Comparator.comparing(EventShortDto::getEventDate))
                     .collect(Collectors.toList());
@@ -277,7 +277,8 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.toList());
 
         Optional<LocalDateTime> start = eventRepository.getMinPublishedDate(eventsIds);
-        Map<Long, Long> commentsQuantity = commentRepository.countCommentsForEventIdIn(eventsIds);
+
+        Map<Long, Long> commentsQuantity = getCommentCountToEvents(eventsIds);
 
         List<EventShortDto> eventShortDtoList = new ArrayList<>();
         if (start.isPresent()) {
@@ -298,6 +299,18 @@ public class EventServiceImpl implements EventService {
         }
 
         return eventShortDtoList;
+    }
+
+    private Map<Long, Long> getCommentCountToEvents(List<Long> eventsIds) {
+
+        Map<Long, Long> eventCommentsCount = new HashMap<>();
+
+        List<Map<String, Long>> commentsQuantity = commentRepository.countCommentsForEventIdIn(eventsIds);
+
+        for (Map<String, Long> longLongMap : commentsQuantity) {
+            eventCommentsCount.put(longLongMap.get("eventId"), longLongMap.get("commentsQuantity"));
+        }
+        return eventCommentsCount;
     }
 
     private List<EventFullDto> mapEventsToFullDtos(List<Event> events) {

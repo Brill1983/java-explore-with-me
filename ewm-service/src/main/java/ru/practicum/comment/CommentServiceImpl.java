@@ -188,7 +188,7 @@ public class CommentServiceImpl implements CommentService {
 
     // _______________________________ Utils _________________________________________________________________________
     private Pageable makePage(Integer from, Integer size, String sort) {
-        if (CommentSort.valueOf(sort).equals(CommentSort.DESC)) {
+        if (CommentSort.valueOf(sort.toUpperCase()).equals(CommentSort.DESC)) {
             return PageRequest.of(from / size, size, Sort.by("createdOn").descending());
         } else {
             return PageRequest.of(from / size, size, Sort.by("createdOn").ascending());

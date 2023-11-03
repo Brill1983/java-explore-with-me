@@ -1,6 +1,6 @@
 package ru.practicum.utils.validations;
 
-import ru.practicum.event.Sort;
+import ru.practicum.comment.CommentSort;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
@@ -12,6 +12,6 @@ public class CommentValidator implements ConstraintValidator<CommentSortConstrai
         if (value == null) {
             return true;
         }
-        return Sort.from(value).isPresent();
+        return CommentSort.from(value).isPresent();
     }
 }

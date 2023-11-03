@@ -31,7 +31,7 @@ public class PublicCommentController {
     public List<CommentFullDto> getCommentsByEventId(@PathVariable long eventId,
                                                      @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
                                                      @RequestParam(defaultValue = "10") @Positive Integer size,
-                                                     @RequestParam(defaultValue = "desc") @CommentSortConstrain String sort) {
+                                                     @RequestParam(defaultValue = "DESC") @CommentSortConstrain String sort) {
         log.info("В метод getCommentsByEventId переданы данные: eventId = {}, from = {}, size = {}, sort = {}",
                 eventId, from, size, sort);
         return commentService.getCommentsByEventId(eventId, from, size, sort);
@@ -42,7 +42,7 @@ public class PublicCommentController {
     public List<CommentShortDto> getUserComments(@PathVariable long userId,
                                                  @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
                                                  @RequestParam(defaultValue = "10") @Positive Integer size,
-                                                 @RequestParam(defaultValue = "desc") @CommentSortConstrain String sort) {
+                                                 @RequestParam(defaultValue = "DESC") @CommentSortConstrain String sort) {
         log.info("В метод getUserComments переданы данные: userId = {}, from = {}, size = {}, sort = {}",
                 userId, from, size, sort);
         return commentService.getUserComments(userId, from, size, sort);

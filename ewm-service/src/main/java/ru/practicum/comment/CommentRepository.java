@@ -18,5 +18,5 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     Page<Comment> findAllByEvent_Id(long eventId, Pageable page);
 
     @Query("select c.event.id as eventId, count(c.id) as commentsQuantity from Comment c where c.event.id in ?1 group by c.event.id")
-    Map<Long, Long> countCommentsForEventIdIn(List<Long> eventsIds);
+    List<Map<String, Long>> countCommentsForEventIdIn(List<Long> eventsIds);
 }
