@@ -3,13 +3,12 @@ package ru.practicum.utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import ru.practicum.exceptions.BadParameterException;
 import ru.practicum.exceptions.ConflictException;
 import ru.practicum.exceptions.ElementNotFoundException;
 
@@ -26,54 +25,29 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public AppiError handleMethodArgumentNotValidExc(MethodArgumentNotValidException e) {
+    public AppiError handleBindExc(BindException e) {
 
         String errors = getErrors(e);
-
         String status = HttpStatus.BAD_REQUEST.name();
-        String parameterName = e.getParameter().getParameter().getName();
-        String className = e.getParameter().getContainingClass().getName();
-        String methodName = e.getParameter().getMethod().getName();
+        String reason = "В параметр запроса передан неправльный агрумент";
+        log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
+        return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
+    }
 
-        String reason = "В метод: " + methodName + ", класса: " + className + ", в параметр: " + parameterName +
-                ", передан неправильный аргумент";
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class, ConstraintViolationException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public AppiError handleConstraintViolationExc(RuntimeException e) {
 
+        String errors = getErrors(e);
+        String status = HttpStatus.BAD_REQUEST.name();
+        String reason = "В параметр запроса передан неправльный агрумент";
         log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
         return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public AppiError handleMethodArgumentTypeMismatchExc(MethodArgumentTypeMismatchException e) {
-
-        String errors = getErrors(e);
-
-        String status = HttpStatus.BAD_REQUEST.name();
-        String parameterName = e.getParameter().getParameter().getName();
-        String className = e.getParameter().getContainingClass().getName();
-        String methodName = e.getParameter().getMethod().getName();
-
-        String reason = "В метод: " + methodName + ", класса: " + className + ", в параметр: " + parameterName +
-                ", передан неправильный аргумент";
-
-        log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
-        return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public AppiError handleConstraintViolationExc(ConstraintViolationException e) {
-
-        String errors = getErrors(e);
-        String status = HttpStatus.CONFLICT.name();
-        String reason = "Нарушение целостности данных";
-        log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
-        return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public AppiError handleMissingArgumentExc(MissingServletRequestParameterException e) {
+    public AppiError handleMissingArgumentExc(MissingServletRequestParameterException e) { // Exception
 
         String errors = getErrors(e);
         String status = HttpStatus.BAD_REQUEST.name();
@@ -109,17 +83,6 @@ public class ErrorHandler {
         String errors = getErrors(e);
         String status = HttpStatus.CONFLICT.name();
         String reason = "Конфликт запроса и базы данных";
-        log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
-        return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public AppiError handleBadParameterExc(BadParameterException e) {
-
-        String errors = getErrors(e);
-        String status = HttpStatus.BAD_REQUEST.name();
-        String reason = "Передан неправильный параметр запроса";
         log.info("Validation message: {}, status: {}, response: {}", e.getMessage(), status, reason);
         return new AppiError(errors, e.getMessage(), reason, status, LocalDateTime.now().format(DATE_FORMAT));
     }

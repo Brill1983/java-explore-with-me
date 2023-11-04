@@ -12,15 +12,15 @@ import java.util.Optional;
 @Repository
 public interface RequestRepository extends JpaRepository<Request, Long> {
 
-    List<Request> findAllByRequester_Id(Long userId);
+    List<Request> findAllByRequesterId(Long userId);
 
-    Optional<Request> findByRequester_IdAndEvent_Id(long userId, long eventId);
+    Optional<Request> findByRequesterIdAndEventId(long userId, long eventId);
 
-    Integer countAllByStatusAndEvent_Id(Status status, long eventId);
+    Integer countAllByStatusAndEventId(Status status, long eventId);
 
-    List<Request> findAllByStatusAndEvent_IdIn(Status status, List<Long> eventsIds);
+    List<Request> findAllByStatusAndEventIdIn(Status status, List<Long> eventsIds);
 
-    List<Request> findAllByEvent_Id(long eventId);
+    List<Request> findAllByEventId(long eventId);
 
     @Modifying
     @Query("update Request as r set r.status = ?1 where r.id in ?2")
@@ -28,5 +28,5 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
 
     List<Request> findAllByIdIn(List<Long> requestIds);
 
-    List<Request> findAllByEvent_IdAndStatus(Long eventId, Status status);
+    List<Request> findAllByEventIdAndStatus(Long eventId, Status status);
 }
